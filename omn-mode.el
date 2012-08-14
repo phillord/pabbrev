@@ -1,3 +1,7 @@
+;; omn-mode.el --- Support for OWL Manchester Syntax
+
+;; Version: 1.0
+
 ;; This file is not part of Emacs
 
 ;; Author: Phillip Lord <p.lord@russet.org.uk>
