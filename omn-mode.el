@@ -4,9 +4,9 @@
 
 ;; This file is not part of Emacs
 
-;; Author: Phillip Lord <p.lord@russet.org.uk>
-;; Maintainer: Phillip Lord <p.lord@russet.org.uk>
-;; Website: http://www.russet.org.uk
+;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; Website: http://www.russet.org.uk/blog
 
 ;; COPYRIGHT NOTICE
 ;;
@@ -44,36 +44,9 @@
 
 See `imenu-generic-expression' for details")
 
-;; not sure if this bit is working yet!
-;; (defvar omn-mode-syntax-table
-;;   (let ((st (make-syntax-table)))
-;;     ;; underscores are valid separators in "words"
-;;     (modify-syntax-entry ?\_ "w" st)
-;;     ;; for name space prefixs
-;;     (modify-syntax-entry ?\: "w" st)
-;;     st)
-;;   "Syntax table for `omn-mode'.")
-
-(defun omn-setup()
-  (make-local-variable 'indent-line-function)
-  (make-local-variable 'tab-to-tab-stop)
-  (make-local-variable 'comment-start)
-  (make-local-variable 'comment-end)
-  (setq comment-start "#")
-  (setq comment-end "")
-
-  (let ((st (syntax-table)))
-    ;; underscores are valid separators in "words"
-    (modify-syntax-entry ?\_ "w" st)
-    ;; for name space prefixs
-    (modify-syntax-entry ?\: "w" st))
-
-  (setq imenu-generic-expression omn-imenu-generic-expression)
-  (setq indent-line-function 'omn-ident-line)
-  (setq tab-stop-list '(4 8 12 16 20 24)))
 
 ;; indentation engine
-(defun omn-ident-line()
+(defun omn-indent-line()
   (indent-line-to 
    (omn-determine-line-indent)))
 
@@ -82,29 +55,21 @@ See `imenu-generic-expression' for details")
     (beginning-of-line)
     (save-match-data
       ;; check the first word
-      (re-search-forward "\\w+" (line-end-position) t)
-      (let ((word (match-string 0))
-            (start (match-beginning 0)))
+      
+      (let ((match (re-search-forward "\\w+" (line-end-position) t)))
         (cond
-         ((not word)
+         ((not match)
           (progn 
             (if (not (forward-line -1))
                 (omn-determine-line-indent)
               0)))
                 
-         ;; basing this on font-lock isn't ideal, because only the bits of the
-         ;; buffer that we have seen have been font locked. This is not a
-         ;; problem for interactive use, but causes a problem when indenting
-         ;; the entire buffer. 
-         
          ;; if it is string, ident should be 0.
-         ((eq (get-text-property start 'face)
-              font-lock-string-face)
+         ((nth 3 (syntax-ppss (point)))
           0)
-              
+   
          ;; if it is a comment
-         ((eq (get-text-property start 'face)
-              font-lock-comment-face)
+         ((nth 4 (syntax-ppss (point)))
           ;; if there is a next line, indent the same as that
           (cond
            ((eq 0 (forward-line 1))
@@ -116,20 +81,14 @@ See `imenu-generic-expression' for details")
            (t 0)))
          
          ;; if it is one of Class:, Prefix: or so on, then indent should be 0
-         ((member word omn-mode-entity-keywords)
+         ((member (match-string 0) omn-mode-entity-keywords)
           0)
          ;; if it is Annotations:, SubClassOf: or so on, then indent should be 4
-         ((member word omn-mode-property-keywords)
+         ((member (match-string 0) omn-mode-property-keywords)
           4)
 
          ;; if it is something else, then 8
          (t 8))))))
-
-
-
-  
-
-
 
 
 (defvar omn-mode-entity-keywords
@@ -163,18 +122,18 @@ See `imenu-generic-expression' for details")
         "Facts:"
         ))
 
+(add-to-list 'auto-mode-alist
+             '("\\.pomn$" . omn-mode))
 
+(add-to-list 'auto-mode-alist
+             '("\\.omn$" . omn-mode))
 
-;; we should move this to derived mode now, since this is far from generic
-(define-generic-mode 'omn-mode
-  '(("# " . nil))
-  
-  ;; keywords
-  omn-mode-entity-keywords
-  ;; a list of additional font lock info
-  `(
-    (
-     ,(mapconcat
+(defvar omn-font-lock-defaults
+  `(,
+    (concat "\\_<" 
+            (regexp-opt omn-mode-entity-keywords t)
+            "\\_>")
+    (,(mapconcat
        (lambda(x) x)
        '("\\<some\\>"
          "\\<only\\>"
@@ -185,29 +144,85 @@ See `imenu-generic-expression' for details")
          )
        "\\|")
      . font-lock-type-face)
-
     (
      ,(mapconcat
-      (lambda(x) x)
-      omn-mode-property-keywords
-      "\\|")
-    . font-lock-builtin-face)
+       (lambda(x) x)
+       omn-mode-property-keywords
+       "\\|")
+     . font-lock-builtin-face)
+    ("\\w+:\\w+" . font-lock-function-name-face)))
     
-    
-    ("\\w+:\\w+" . font-lock-function-name-face)
-     
-    )
+
+(defvar omn-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    ;; string quotes
+    (modify-syntax-entry ?\" "\"" st)
+    ;; This is a bit underhand, but we define the < and > characters to be
+    ;; "generic-string" delimiters. This results in fontification for URLs
+    ;; which is no bad thing. Additionally, it makes the comment character
+    ;; work, as "#" is a valid in a URL. The semantics of this isn't quite
+    ;; right, because the two characters are not paired. So <url> is
+    ;; recognised, but so is <url< or >url>
+    (modify-syntax-entry ?\< "|" st)
+    (modify-syntax-entry ?\> "|" st)
+    ;; define comment characters for syntax
+    (modify-syntax-entry ?\# "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    ;; underscores are valid separators in "words"
+    (modify-syntax-entry ?\_ "w" st)
+    ;; for name space prefixs
+    (modify-syntax-entry ?\: "w" st)
+    st))
+
+(defun omn-mode-electric-indent()
+  (interactive)
+  (self-insert-command 1)
+  (omn-mode-indent-here))
+
+(defun omn-mode-indent-here()
+  (let ((m (point-marker)))
+    (omn-indent-line)
+    (goto-char (marker-position m))))
+
+(defun omn-mode-electric-newline()
+  (interactive)
+  (newline)
+  (save-excursion
+    (forward-line -1)
+    (omn-indent-line)))
+
+(define-derived-mode omn-mode fundamental-mode "Omn"
+  "Doc string to add"
+
+  ;; font-lock stuff
+  (setq font-lock-defaults
+        '(omn-font-lock-defaults))
+
+  (make-local-variable 'comment-start)
+  (make-local-variable 'comment-end)
+  (make-local-variable 'comment-start-skip)
+  ;; set up commenting
+  (setq comment-start "#")
+  (setq comment-end "")
+  ;; no idea what this is about -- stolen from generic
+  (setq comment-start-skip "#+\\s-*")
+
+  (set-syntax-table omn-mode-syntax-table)
   
-  
-  
-  ;; file spec
-  (list "\\.omn$")
-  ;; hooks
-  '(omn-setup))
+  (setq imenu-generic-expression omn-imenu-generic-expression)
+
+  (make-local-variable 'indent-line-function)
+  (setq indent-line-function 'omn-indent-line))
 
 
-(add-to-list 'auto-mode-alist
-             '("\\.pomn$" . omn-mode))
+;; need to bind to return as well
+(mapc
+ (lambda(x)
+   (define-key omn-mode-map x 'omn-mode-electric-indent))
+ `(" " "," ":"))
+
+(define-key omn-mode-map (kbd "RET") 'omn-mode-electric-newline)
+
 
 
 
@@ -222,3 +237,4 @@ See `imenu-generic-expression' for details")
 ;; 
 ;; Have the command interface return results between tags as lisp. We can eval
 ;; this, and get the result in that way. 
+
