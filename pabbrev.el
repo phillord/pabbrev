@@ -1,12 +1,11 @@
-;; pabbrev.el --- Predictive abbreviation expansion
+;;; pabbrev.el --- Predictive abbreviation expansion
 
-;; Version: 3.0
+;; Version: 3.1
 
 ;; This file is not part of Emacs
 
-;; Author: Phillip Lord <p.lord@russet.org.uk>
-;; Maintainer: Phillip Lord <p.lord@russet.org.uk>
-;; Maintainer (XEmacs): Martin Kuehl (martin.kuehl@gmail.com)
+;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Website: http://www.russet.org.uk
 
 ;; COPYRIGHT NOTICE
