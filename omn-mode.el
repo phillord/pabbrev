@@ -56,13 +56,17 @@ See `imenu-generic-expression' for details")
     (save-match-data
       ;; check the first word
       
-      (let ((match (re-search-forward "\\w+" (line-end-position) t)))
+      (let* ((match (re-search-forward "\\w+" (line-end-position) t))
+             (word (if match 
+                       (match-string 0)
+                     "")))
+                     
         (cond
-         ((not match)
-          (progn 
-            (if (not (forward-line -1))
-                (omn-determine-line-indent)
-              0)))
+         ;; ((not match)
+         ;;  (progn 
+         ;;    (if (not (forward-line -1))
+         ;;        (omn-determine-line-indent)
+         ;;      0)))
                 
          ;; if it is string, ident should be 0.
          ((nth 3 (syntax-ppss (point)))
@@ -81,10 +85,10 @@ See `imenu-generic-expression' for details")
            (t 0)))
          
          ;; if it is one of Class:, Prefix: or so on, then indent should be 0
-         ((member (match-string 0) omn-mode-entity-keywords)
+         ((member word omn-mode-entity-keywords)
           0)
          ;; if it is Annotations:, SubClassOf: or so on, then indent should be 4
-         ((member (match-string 0) omn-mode-property-keywords)
+         ((member word omn-mode-property-keywords)
           4)
 
          ;; if it is something else, then 8
