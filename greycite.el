@@ -65,6 +65,7 @@
 (defvar greycite-adoc-kblog-cite-format 
   '(
     (?\C-m . "kurl:")
+    (?4 . "$$[cite]http:")
     (?h . "http:")
     (?j . "http:[]"))
   )
@@ -110,6 +111,8 @@
       (lambda(url)
 	(substring url 7))
       )))
+   ((string= format "$$[cite]http:")
+    (concat "$$[cite]" (reftex-get-bib-field "url" entry) "[/cite]$$"))
    ((string= format "http:")
     (reftex-get-bib-field "url" entry))
    ((string= format "http:[]")
@@ -214,10 +217,6 @@
       (concat 
        "http://greycite.knowledgeblog.org/resolve/"
        doi)))
-    (goto-char (point-min))
-    (delete-region
-     (point-min)
-     (search-forward "\n\n"))
     (buffer-string)))
 
 
