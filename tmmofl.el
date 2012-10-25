@@ -277,7 +277,6 @@ If a face is in `faces-to-iterate' but not in `faces-cache', then call
 (defun tmmofl-ensure-buffer-tmmofl-ready()
   "Ensure that the `tmmofl-post-command-hook-function' is on the
 post-command-hook and that this hook is local"
-  (make-local-hook 'post-command-hook)
   (add-hook 'post-command-hook 'tmmofl-post-command-hook-function nil t))
 
 (defun tmmofl-possibly-remove-tmmofl-readiness()
