@@ -10,7 +10,7 @@
 
 ;; COPYRIGHT NOTICE
 ;;
-;; This program is free software; you can redistribute it and/or modify 
+;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 2, or (at your option)
 ;; any later version.
@@ -52,7 +52,7 @@
 
 ;;; Code:
 (defvar git-update-install-root (concat user-emacs-directory "git-packages"))
-(defvar git-update-frequency 1)
+(defvar git-update-frequency 7)
 (defvar git-update-buffer (get-buffer-create "*git-update*"))
 
 (defun git-update (repo &optional location)
@@ -61,17 +61,22 @@
 If not then run git clone. If not check whether the file
 .git/FETCH_HEAD is older than `git-update-frequency' days old. If
 it is run git pull. Otherwise, do nothing
-Optional argument LOCATION is the directory into which the REPO will be cloned, 
+Optional argument LOCATION is the directory into which the REPO will be cloned,
 otherwise `git-update-install-root' will be used."
-  (let* ((location (or location git-update-install-root))
+  (let* ((location
+          (or location
+              (progn
+                  (when (not (file-exists-p git-update-install-root))
+                    (make-directory git-update-install-root))
+                  git-update-install-root)))
          (project-dir
           (concat (or location
                       git-update-install-root) "/"
                       (git-update-dir-from-git repo))))
     (if (file-exists-p project-dir)
-        (git-update-maybe project-dir)
+        (git-update-maybe repo project-dir)
       (git-update-clone repo location)
-      (git-update-maybe project-dir))
+      (git-update-maybe repo project-dir))
     (let ((default-directory project-dir))
       (normal-top-level-add-subdirs-to-load-path))
     (add-to-list 'load-path project-dir)
@@ -94,36 +99,39 @@ otherwise `git-update-install-root' will be used."
                 repo)
   (message (format "Clone: %s...done" repo)))
 
-(defun git-update-maybe (git-location)
+(defun git-update-maybe (repo git-location)
   ;; after a clone, FETCH_HEAD doesn't exist. So, we can't tell when the clone
   ;; happened. So, do a pull anyway.
   (let ((fetch-head (concat git-location "/.git/FETCH_HEAD")))
     (if (not (file-exists-p fetch-head))
-        (git-update-do git-location)
+        (git-update-do repo git-location)
       (let ((age
              (-
-              (nth 1
-                   (current-time))
-              (nth 1
-                   (nth 5
-                        (file-attributes
-                         (concat git-location "/.git/FETCH_HEAD" )))))))
+              (time-to-seconds
+               (current-time))
+              (time-to-seconds
+               (nth 5
+                    (file-attributes
+                     (concat git-location "/.git/FETCH_HEAD" )))))))
         (if (> age (* git-update-frequency 60 60 24))
-            (git-update-do git-location)
+            (git-update-do repo git-location)
           (with-current-buffer
             git-update-buffer
             (goto-char (point-max))
             (insert (format "Not updating %s\n" git-location))))))))
 
-(defun git-update-do (git-location)
+(defun git-update-do (repo git-location)
   (display-buffer git-update-buffer)
   (set-buffer git-update-buffer)
   (goto-char (point-max))
-  (insert (format "Updating: %s\n" git-location))
+  (insert (format "Updating: %s\n\tfrom %s\n"
+                  git-location repo))
   (goto-char (point-max))
   (cd git-location)
   (call-process "git" nil git-update-buffer t "pull")
-  (message (format "Updating: %s...done" git-location)))
+  ;; put an extra new line if call-process returns non-zero
+  (insert "\n")
+  (message "Updating: %s...done" git-location))
 
 (provide 'git-update)
 ;;; git-update.el ends here
