@@ -144,7 +144,11 @@ See `imenu-generic-expression' for details")
          "\\<and\\>"
          "\\<or\\>"
          "\\<exactly\\>"
+         "max"
+         "min"
          "Transitive"
+         "Functional"
+         "InverseFunctional"
          )
        "\\|")
      . font-lock-type-face)
