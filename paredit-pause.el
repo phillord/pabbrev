@@ -29,16 +29,17 @@
 ;;
 ;; You know how it is. You're wandering happily through your syntax tree, all
 ;; your sexps are balanced, your code is looking lovely. Then, suddenly it
-;; happens, your fixing one of your functions, and bang, your barf one sexp
+;; happens, you're fixing one of your functions, and bang, you barf one sexp
 ;; too many, with C-left. Oh no! So, you C-right before realising that it's
 ;; not the opposite. Half your file gets slurped, and probably several other
 ;; files that you haven't even opened. You try splitting, wrapping, raising,
 ;; it's just gets worse and worse. Randomly symbols get spewed across your
 ;; source code, empty forms, and strings everywhere; you look at the hideous
-;; ruin of your work; look at you works, ye mighty, and despair.
+;; ruin of your work; look at your works, ye mighty, and despair.
 
-;; The solution, is M-x paredit-mode, fix stuff, and them M-x paredit-mode.
-;; But this takes too long, and is painful, hence paredit-pause was born.
+;; The solution, is M-x paredit-mode, fix stuff, and then M-x paredit-mode to
+;; get back to where you started. But this takes too long, and is painful,
+;; hence paredit-pause was born.
 
 ;; Paredit allows you to toggle paredit-mode on and off with a single
 ;; keypress. When paredit-mode is off, it is replaced with paredit-pause-mode,
