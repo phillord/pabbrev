@@ -451,6 +451,7 @@ I'm not telling you which version, I prefer."
    dired-mode 
    eshell-mode
    slime-repl-mode
+   nrepl-mode
    ;; gnus article mode is read-only so should be missed anyway,
    ;; but it does something wierd so that it's not
    gnus-article-mode           
