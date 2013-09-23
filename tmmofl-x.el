@@ -52,6 +52,22 @@
      (lambda()
        (abbrev-mode 1)))))
     
+
+(defvar tmmofl-clojure-mode-actions
+  '((font-lock-comment-face 
+     (lambda()
+       (progn
+         (auto-fill-mode 1)))
+     (lambda()
+       (progn
+         (auto-fill-mode 0))))
+    
+    (font-lock-string-face
+     (lambda()
+       (auto-fill-mode 1))
+     (lambda()
+       (auto-fill-mode 0)))))
+    
   
 
 
