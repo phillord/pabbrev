@@ -5,6 +5,7 @@
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Keywords: paredit
+;; Version: 1.0
 
 ;; COPYRIGHT NOTICE
 ;;
@@ -76,7 +77,7 @@ SUBMENU is the current submenu"
           ;; start a new submenu
           (paredit-menu-build-menu-1
            rest
-           ;; appuending the last submenu if it exists
+           ;; appending the last submenu if it exists
            (if submenu
                (append menu (list submenu))
              menu)
@@ -98,7 +99,7 @@ No point putting \"paredit\" on the front of everything, so chop
 this off.
 
 NAME is the symbol name."
-(substring name 8))
+  (substring name 8))
 
 (defun paredit-menu-help-string (command)
   "Generate help string for command.
