@@ -47,7 +47,7 @@
 ;; `greycite-bibtex-doi-update' do similar jobs for DOIs.
 ;;
 ;; Reftex support is added automatically to adoc-mode. If you prefer to use
-;; someother mode than adoc, `greycite-asciidoc-reftex-support' will turn this
+;; some other mode than adoc, `greycite-asciidoc-reftex-support' will turn this
 ;; on. 
 ;;
 
@@ -61,6 +61,10 @@
 (add-hook 'adoc-mode-hook
           'greycite-asciidoc-reftex-support)
 
+(add-hook 'markdown-mode-hook
+          'greycite-markdown-reftex-support)
+
+
 (defvar greycite-reftex-citation-override nil)
 (defvar greycite-adoc-kblog-cite-format 
   '(
@@ -70,16 +74,42 @@
     (?j . "http:[]"))
   )
 
+(defvar greycite-markdown-cite-format
+  '(
+    (?\C-m . "[?](http://)")))
+
+
 (defvar greycite-default-bibliographies
   '("~/documents/bibtex/phil_lord_refs.bib" 
-    "~/documents/bibtex/phil_lord/journal_papers.bib"
-    "~/documents/bibtex/phil_lord/conference_papers.bib"
+    "~/documents/bibtex/phil_lord/phil_lord_all.bib"
     "~/documents/bibtex/urls.bib"
     "~/documents/bibtex/russet.bib"
+    "~/documents/bibtex/kblog.bib"
     ))
 
 
 (defun greycite-asciidoc-reftex-support()
+  (interactive)
+  (greycite-alien-reftex-support greycite-adoc-kblog-cite-format))
+
+(defun greycite-markdown-reftex-support ()
+  (interactive)
+  (greycite-alien-reftex-support greycite-markdown-cite-format)
+  (make-local-variable 'reftex-cite-cleanup-optional-args)
+  (setq reftex-cite-cleanup-optional-args nil)
+  (add-hook 'greycite-pre-insert-hook 
+            'greycite-markdown-pre-hook))
+
+(defun greycite-markdown-pre-hook ()
+  (insert "]")
+  (save-excursion 
+    (forward-word -1)
+    (insert "[")))
+
+
+(defvar greycite-pre-insert-hook nil)
+
+(defun greycite-alien-reftex-support(cite-format)
   (interactive)
   (reftex-mode 1)
   (make-local-variable 'greycite-reftex-citation-override)
@@ -87,14 +117,17 @@
   (make-local-variable 'reftex-default-bibliography)
   (make-local-variable 'reftex-cite-format)
   (setq reftex-cite-format
-        greycite-adoc-kblog-cite-format)
+        cite-format)
   (setq reftex-default-bibliography greycite-default-bibliographies))
 
+
 (defadvice reftex-format-citation (around greycite-asciidoc-around activate)
-  "Alter citation style for kcite"
-  (if greycite-reftex-citation-override
+  "Alter citation stylue for kcite"
+  (if (and greycite-reftex-citation-override
+           (not (string= "%2a %y, %T, %B, %j %v:%P, %s %<" format)))
       (progn 
-        (setq ad-return-value (greycite-reftex-format-citation entry format)))
+        (setq ad-return-value (greycite-reftex-format-citation entry format))
+        (run-hooks 'greycite-pre-insert-hook))
     ad-do-it))
 
 ;; we can't just use reftex-format-citation -- it has will template with most
@@ -117,7 +150,10 @@
     (reftex-get-bib-field "url" entry))
    ((string= format "http:[]")
     (concat (reftex-get-bib-field "url" entry) "[]"))
-   ))
+   ;; markdown
+   ((string= format "[?](http://)")
+    (concat "?(" (reftex-get-bib-field "url" entry) ")"))
+   (t (error "Format not recognised"))))
 
 
 (defun greycite-reftex-or-false(entry field prefix &optional transform)
@@ -273,5 +309,11 @@
   (interactive)
   (greycite-bibtex-region-from-greycite 
    (point-min) (point-max)))
+
+(defun greycite-buffer ()
+  (interactive)
+  (while (< -1 (forward-line -1))
+    (greycite-bibtex-url)
+    (sit-for 2)))
 
 (provide 'greycite)
