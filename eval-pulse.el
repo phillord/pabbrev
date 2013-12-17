@@ -39,6 +39,10 @@
 ;; good idea to change such low-level functions, a core part of the lisp
 ;; loading system of Emacs for such a piece of cheap eye-candy?
 
+;;; Status:
+;;
+;; I use it all the time, but then I am easily impressed.
+
 (require 'pulse)
 
 ;;; Code:
