@@ -1,7 +1,5 @@
 ;;; eval-pulse.el --- Pulse lisp forms as they are evaled
 
-;; Version: 0.1
-
 ;; This file is not part of Emacs
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
@@ -41,52 +39,32 @@
 ;; good idea to change such low-level functions, a core part of the lisp
 ;; loading system of Emacs for such a piece of cheap eye-candy?
 
-;; Currently eval-pulse provides support for Emacs lisp, inferior lisp and
-;; CIDER (for Clojure). More could be added easily.
-
-;; The colour and speed of the pulse can be controlled with
-;; `eval-pulse-delay', `eval-pulse-iterations' and
-;; `eval-pulse-highlight-start-face'. These variables are the same as the
-;; equivalent ones in `pulse', but unless the pulse is very short in this
-;; context it is quite annoying, hence the dual configuration.
-
 (require 'pulse)
 
 ;;; Code:
-(defgroup eval-pulse nil
-  "Pulsing eye-candy for lisps"
-  :tag "Pulsing for Lisp")
-
-(defcustom eval-pulse-delay 0.01
-  "Delay between face lightening iterations. See also `pulse-delay'."
-  :group 'eval-pulse
-  :type 'number)
-
-(defcustom eval-pulse-iterations 2
-  "Number of iterations in pulse. See also `pulse-iterations'."
-  :group 'eval-pulse
-  :type 'number)
-
-(defface eval-pulse-highlight-start-face
-  '((((class color) (background dark))
-     (:background "#FF0000"))
-    (((class color) (background light))
-     (:background  "#FF0000")))
-  "Face used at beginning of a highlight."
-  :group 'eval-pulse)
-
-
-;; debug vars
 (defvar eval-pulse-pulses 0)
 (defvar eval-pulse-form nil)
 
-;; Only pulse on top level code.
-;; Evaling the defvar form entertainingly breaks this package, because the
-;; variable is changed in the middle of the macro which controls it, so add a
-;; setq here to put things back where they belong.
-;;
-;; (setq eval-pulse-depth 0)
+;; evaling `eval-pulse-depth' causes all sorts of problems, so reset here with
+;; eval-pulse-depth 1
+;;(setq eval-pulse-depth 1)
 (defvar eval-pulse-depth 0)
+(defvar eval-pulse-delay 0.01)
+(defvar eval-pulse-iterations 4)
+
+;; probe to see whether we can pulse the foreground or not. The current
+;; version of pulse sets `pulse-highlight-face' to have a background, while my
+;; hacked version gives this face no characteristics.
+(defvar eval-pulse-can-pulse-foreground
+  (not (face-background 'pulse-highlight-face)))
+
+(defface eval-pulse-highlight-start-face
+  '((((class color) (background dark))
+     (:foreground "#FF0000"))
+    (((class color) (background light))
+     (:foreground  "#FF0000")))
+  "Face used at beginning of a highlight."
+  :group 'eval-pulse)
 
 ;; pulse is hard-coded for background -- bummer
 (defun eval-pulse-momentary-highlight-region
@@ -97,23 +75,27 @@
   ;;           eval-pulse-depth
   ;;           start stop)
   (let ((pulse-delay eval-pulse-delay)
-        (pulse-iteration eval-pulse-iterations))
+        (pulse-iterations eval-pulse-iterations))
     ;; only actually pulse when we are at an pulse depth of 1, otherwise we
     ;; get multiple flashes
     (when (and eval-pulse-mode
                (= 1 eval-pulse-depth))
       (pulse-momentary-highlight-region
        start stop
-       'eval-pulse-highlight-start-face))))
+       (if eval-pulse-can-pulse-foreground
+           'eval-pulse-highlight-start-face
+         'pulse-highlight-start-face)))))
 
 (defmacro eval-pulse-one-pulse (form &rest body)
   "Only allow one pulse at a time. The various adviced eval forms
 tend to call each other so this is necessary to avoid flashing screens."
   `(unwind-protect
-       (progn (incf eval-pulse-depth)
+       (progn (setq eval-pulse-depth
+                    (+ 1 eval-pulse-depth))
               (setq eval-pulse-form ,form)
               ,@body)
-     (decf eval-pulse-depth)))
+     (setq eval-pulse-depth
+           (- eval-pulse-depth 1))))
 
 (defun eval-pulse-last-sexp (position)
   "Pulse the last sexp."
@@ -246,6 +228,16 @@ tend to call each other so this is necessary to avoid flashing screens."
    'cider-load-current-buffer
    ad-do-it
    (eval-pulse-buffer (current-buffer))))
+
+(defadvice cider-eval-last-expression
+  (around pulse-cider-eval-last-expression activate)
+  "Add a pulsing effect to the region evaled."
+  (eval-pulse-one-pulse
+   'lisp-eval-last-sexp
+   (let ((point (point)))
+     ad-do-it
+     (eval-pulse-last-sexp point))))
+
 
 ;; End Advice
 
