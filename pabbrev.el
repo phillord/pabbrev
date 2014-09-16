@@ -620,12 +620,15 @@ it's ordering is part of the core data structures"
 (defvar pabbrev-mode-map (make-keymap)
   "Keymap for pabbrev-minor-mode.")
 
-;; I don't understand this. I thought that this were equivalent. But
-;; modes which define [tab] get used in preference to \t. So I define
-;; both. Don't change these without also changing the definition of
-;; pabbrev-expand-maybe. 
+;; it should be possible to reconfigure this now, although there is special
+;; handling in `pabbrev-get-previous-binding' for tab and return and this
+;; might be needed for other bindings also.
+
+;; \t works in tty but gets overridden by the [tab] binding elsewhere.
 (define-key pabbrev-mode-map "\t" 'pabbrev-expand-maybe)
+;; this is normally the one that gets called
 (define-key pabbrev-mode-map [tab] 'pabbrev-expand-maybe)
+
 
 
 ;; xemacs has synced to newest easy-mmode now
@@ -943,7 +946,11 @@ at buffer position END."
                                 prev-binding
                               last-command))
               (this-command prev-binding))
-          (funcall prev-binding)))))
+          (if (eq 'self-insert-command prev-binding)
+              (self-insert-command 1)
+            (funcall prev-binding))))))
+
+
 
 
 ;; (defun pabbrev-call-previous-tab-binding ()
@@ -997,26 +1004,47 @@ With prefix argument, bring up a menu of all full expansions."
 
 ;; (setq pabbrev-minimal-expansion-p nil)
 
-
 (defun pabbrev-show-previous-binding () 
   (interactive)
-  (message "Previous binding is: %s" 
+  (message "Previous binding is: %s"
            (pabbrev-get-previous-binding)))
 
 (defun pabbrev-get-previous-binding ()
   "Show the binding of tab if pabbrev were not active.
 The command `pabbrev-show-previous-binding' prints this out."
   (let ((pabbrev-mode nil))
-    ;; This is the original and satisfying solution
-    ;;(key-binding (char-to-string last-command-event)))))
-    
+    ;; tab is special, because we can bind both [tab]
+    ;; and \t. Normally, pabbrev binds to [tab] but for example
+    ;; so this-command-keys-vector returns [tab]. But, emacs-lisp-mode for
+    ;; instance, binds to \t. Now this has been overridden by the pabbrev
+    ;; binding for [tab]. But if we check for previous binding for [tab] it
+    ;; will be nil, because emacs-lisp-mode binds \t and not [tab]. So,
+    ;; we check for tab and return either the binding for tab or the binding
+    ;; for \t which should work regardless of what the mode binds.
+    ;; Likewise return it seems!
+    (let ((tckv
+           (if pabbrev-xemacs-p
+               (this-command-keys)
+             (this-command-keys-vector))))
+      (cond
+       ((or (equal tckv [tab])
+            (equal tckv [9]))
+        (or (key-binding [tab]) (key-binding "\t")))
+       ((or (equal tckv [return])
+            (equal tckv [32]))
+        (or (key-binding [return]) (key-binding "\n")))
+       (t
+        (key-binding tckv))))))
+
+    ;; ;; This is the original and satisfying solution
+    ;; (key-binding (this-command-keys))))
     ;; This is the new and unsatisfying one. The
     ;; keybindings are hard coded here, because I defined
     ;; [tab] and \t earlier. Both are tab, but the former
-    ;; gets used in preference to the later. 
-    (or (key-binding [tab])
-        (key-binding "\t"))))
-             
+    ;; gets used in preference to the later.
+;;    (or (key-binding [tab])
+;;        (key-binding "\t"))))
+
 ;;           ;; I think that I have this worked out now.
 ;;           (if (eq prev-binding 'pabbrev-expand-maybe)
 ;;               (message "pabbrev known bug! Avoiding recursive tab")
