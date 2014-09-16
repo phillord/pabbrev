@@ -452,6 +452,7 @@ I'm not telling you which version, I prefer."
    eshell-mode
    slime-repl-mode
    nrepl-mode
+   cider-repl-mode
    ;; gnus article mode is read-only so should be missed anyway,
    ;; but it does something wierd so that it's not
    gnus-article-mode           
