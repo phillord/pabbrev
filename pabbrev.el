@@ -844,25 +844,6 @@ anything. Toggling it off, and then on again will usually restore functionality.
           ;; set an overlay at 1 1. Originally this used to be a 0 0 but
           ;; it crashes xemacs...well I never....
           (make-overlay 1 1)))
-  ;; for when we are not in font-lock-mode
-  (overlay-put pabbrev-overlay 'face
-               (if (> count 1) 'pabbrev-suggestions-face
-                 'pabbrev-single-suggestion-face))
-  ;; for when we are. If we just set face, font-lock tends to reset the face
-  ;; immediately. This isn't working for me. font-lock still just blithely
-  ;; resets the properties we have so carefully just placed
-  (overlay-put pabbrev-overlay 'font-lock-face
-               (if (> count 1) 'pabbrev-suggestions-face
-                 'pabbrev-single-suggestion-face))
-  (move-overlay pabbrev-overlay start end (current-buffer)))
-
-(defun pabbrev-set-overlay(start end count)
-  "Move overlay to START END location."
-  (unless pabbrev-overlay
-    (setq pabbrev-overlay
-          ;; set an overlay at 1 1. Originally this used to be a 0 0 but
-          ;; it crashes xemacs...well I never....
-          (make-overlay 1 1)))
   (overlay-put pabbrev-overlay 'face
                (if (> count 1) 'pabbrev-suggestions-face
                  'pabbrev-single-suggestion-face))
