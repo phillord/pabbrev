@@ -1103,8 +1103,8 @@ before the command gets run.")
     (setq suggestions pabbrev-suggestions-done-suggestions)
     (let
         ((window-width (- (window-width) 1)))
-      (save-excursion
-        (set-buffer (get-buffer " *pabbrev suggestions*"))
+      (with-current-buffer
+          (get-buffer " *pabbrev suggestions*")
         (pabbrev-suggestions-setup)`
         (princ
          (concat;;"Current Word: " prefix " "
@@ -1219,8 +1219,8 @@ self inserting commands."
 (defun pabbrev-suggestions-insert(insertion)
   "Actually insert the suggestion."
   (let ((point))
-    (save-excursion
-      (set-buffer pabbrev-suggestions-from-buffer)
+    (with-current-buffer
+        pabbrev-suggestions-from-buffer
       (let ((bounds (pabbrev-bounds-of-thing-at-point)))
         (progn
           (delete-region (car bounds) (cdr bounds))
@@ -1420,8 +1420,8 @@ See `pabbrev-long-idle-timer'.")
 
 (defun pabbrev-short-idle-timer(&optional buffer)
   "Add a few words to the dictionary."
-  (save-excursion
-    (set-buffer (or buffer (current-buffer)))
+  (with-current-buffer
+      (or buffer (current-buffer))
     ;; remember which buffer we have just looked at.
     (setq pabbrev-timer-buffer (current-buffer))
     (if (and pabbrev-mode (not pabbrev-disable-timers))
@@ -1436,8 +1436,8 @@ See `pabbrev-long-idle-timer'.")
 (defun pabbrev-idle-timer-function(&optional buffer)
   ;; so this only works on the current buffer. Might want to scavenge
   ;; over other buffers
-  (save-excursion
-    (set-buffer (or buffer pabbrev-timer-buffer (current-buffer)))
+  (with-current-buffer
+      (or buffer pabbrev-timer-buffer (current-buffer))
     (if (and pabbrev-mode (not pabbrev-disable-timers))
         (pabbrev-idle-timer-function-0)
       (pabbrev-debug-message "idle running in non pabbrev-mode"))))
@@ -1511,9 +1511,8 @@ If this takes up too much processor power, see `pabbrev-scavenge-some-chunk-size
   `(if pabbrev-debug-enabled
        (let ((insert
               (concat (format ,@body) "\n")))
-         (save-excursion
-           (set-buffer
-            (pabbrev-debug-get-buffer))
+         (with-current-buffer
+             (pabbrev-debug-get-buffer)
            (goto-char (point-max))
            (insert insert)
            (pabbrev-debug-frame-scroll)))))
@@ -1732,7 +1731,6 @@ to the dictionary."
                   (format "... %c" (aref [ ?- ?/ ?| ?\\ ] (% ref1 4))))
          (setq ref1 (1+ ref1)))
        (put 'working-status-forms 'lisp-indent-function 2)))))
-
 
 (provide 'pabbrev)
 ;;; pabbrev.el ends here
