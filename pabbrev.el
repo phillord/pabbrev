@@ -1,8 +1,6 @@
 ;;; pabbrev.el --- Predictive abbreviation expansion
 
-;; Copyright (C) 2004, 2014 by Phillip Lord
-
-;; Copyright dates are not exhaustive and may include earlier dates.
+;; Copyright (C) 2003-2014 by Phillip Lord
 
 ;; This file is not part of Emacs
 
