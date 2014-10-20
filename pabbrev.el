@@ -1,8 +1,6 @@
 ;;; pabbrev.el --- Predictive abbreviation expansion
 
-;; Copyright (C) 2003-2014 by Phillip Lord
-
-;; This file is not part of Emacs
+;; Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
@@ -14,7 +12,7 @@
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2, or (at your option)
+;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
 
 ;; This program is distributed in the hope that it will be useful,
