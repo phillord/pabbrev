@@ -689,10 +689,9 @@ on in all buffers.
 ;;                              " Pabbrev"
 ;;                              pabbrev-mode-map))
 
-;;;###autoload (autoload 'global-pabbrev-mode "pabbrev" nil t)
-(if (fboundp 'easy-mmode-define-global-mode) ;FIXME: Unneeded nowadays!
-    (easy-mmode-define-global-mode global-pabbrev-mode
-                                   pabbrev-mode pabbrev-global-mode))
+;;;###autoload
+(define-global-minor-mode global-pabbrev-mode
+  pabbrev-mode pabbrev-global-mode)
 
 (defun pabbrev-global-mode()
   "Switch on `pabbrev-mode' in current buffer if appropriate.
