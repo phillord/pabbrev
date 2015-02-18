@@ -252,6 +252,8 @@
         )))
 
 ;; Working.el hack. Use working.el if it's around, or don't if it's not.
+;; PWL, 2015. working.el is part of cedet but isn't in the emacs trunk
+;; version. Perhaps I should just remove this?
 (eval-and-compile
   (condition-case nil
       (require 'working)
