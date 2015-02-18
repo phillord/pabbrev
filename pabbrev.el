@@ -357,7 +357,7 @@ this at a later date."
 
 The function `pabbrev-mode' works by altering the local buffer,
 so it's pointless within a read only buffer. So, normally, it
-signals an error when an attempt is made to use it in this way.
+prints a message when an attempt is made to use it in this way.
 But this is a pain if you toggle buffers read only a lot. Set
 this to NIL, and function `pabbrev-mode' will disable it's functionality in
 read only buffers silently."
@@ -654,7 +654,7 @@ on in all buffers.
     ;; FIXME: Signaling an error makes no sense.  Just make it a `message'
     ;; and get rid of pabbrev-read-only-error.  After all, the user can
     ;; enable/disable read-only-mode after pabbrev-mode.
-    (error "Can not use pabbrev-mode in read only buffer"))
+    (message "Can not use pabbrev-mode in read only buffer"))
   (cond
    (pabbrev-mode
     (add-hook 'pre-command-hook 'pabbrev-pre-command-hook nil t)
