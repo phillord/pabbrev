@@ -447,16 +447,13 @@ I'm not telling you which version, I prefer."
 (mapc
  (lambda(x)
    (put x 'pabbrev-global-mode-excluded-modes t))
- `(shell-mode                           ;FIXME: Why?
-   Custom-mode
-   custom-mode
+ `(
+   ;; I put this in at one point -- probably not needed now, but I have no
+   ;; where to test it.
    telnet-mode
    term-mode
-   dired-mode
-   eshell-mode                          ;FIXME: Why?
-   slime-repl-mode                      ;FIXME: Why?
-   nrepl-mode                           ;FIXME: Why?
-   cider-repl-mode                      ;FIXME: Why?
+   ;; eshell uses it's own tab binding, so abbrevs get offered but not expanded
+   eshell-mode
    ;; gnus article mode is read-only so should be missed anyway,
    ;; but it does something wierd so that it's not
    gnus-article-mode
