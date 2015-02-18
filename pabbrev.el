@@ -851,7 +851,7 @@ anything. Toggling it off, and then on again will usually restore functionality.
   (set-marker (pabbrev-marker-last-expansion)
               (point) (current-buffer)))
 
-(defvar pabbrev-debug-enabled)
+(defvar pabbrev-debug-enabled nil)
 (defmacro pabbrev-debug-message(&rest body)
   `(if pabbrev-debug-enabled
        (let ((insert
