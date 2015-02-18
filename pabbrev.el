@@ -236,7 +236,7 @@
 ;; universal argument support and some bug fixes.
 
 ;;; Code:
-(require 'cl)                           ;FIXME: Use cl-lib!
+(require 'cl-lib)
 (require 'thingatpt)
 
 (eval-and-compile
@@ -1146,7 +1146,7 @@ The command `pabbrev-show-previous-binding' prints this out."
           "Best Match: " (car pabbrev-suggestions-best-suggestion)
           "\n"))
         (if suggestions
-            (loop for i from 0 to 9 do
+            (cl-loop for i from 0 to 9 do
               ;; are we less than the suggestions
               (if (< i (length suggestions))
                   (progn
@@ -1193,11 +1193,11 @@ It crashes under the same circumstances. Yeech."
       (subseq sequence from
               (min to
                    (length sequence)))
-    (subseq sequence from to)))
+    (cl-subseq sequence from to)))
 
 (defvar pabbrev-select-mode-map
   (let ((map (make-sparse-keymap)))
-    (loop for i from ?! to ?~ do
+    (cl-loop for i from ?! to ?~ do
           (define-key map (char-to-string i) 'pabbrev-noop))
     (define-key map "\t" 'pabbrev-suggestions-select-default)
     (define-key map [delete] 'pabbrev-suggestions-delete)
@@ -1206,7 +1206,7 @@ It crashes under the same circumstances. Yeech."
     (define-key map " " 'pabbrev-suggestions-delete-window)
     (define-key map "q" 'pabbrev-suggestions-delete-window)
     ;; Define all the standard insert commands.
-    (loop for i from 0 to 9 do
+    (cl-loop for i from 0 to 9 do
           (define-key map
             (number-to-string i) 'pabbrev-suggestions-select))
     map))
@@ -1303,7 +1303,7 @@ self inserting commands."
   "Return t if anywhere between START and END is marked."
   (save-excursion
     (let ((retn))
-      (do ((i start (1+ i)))
+      (cl-do ((i start (1+ i)))
           ((> i end))
         (if
             (setq retn
