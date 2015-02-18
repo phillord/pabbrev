@@ -474,16 +474,8 @@ I'm not telling you which version, I prefer."
 
 (defmacro pabbrev-save-buffer-modified-p (&rest body)
   "Eval BODY without affected buffer modification status."
-  (if (fboundp 'with-silent-modifications)
-      `(with-silent-modifications ,@body)
-    `(unwind-protect
-         ;; inhibit modification hooks to avoid nasty interaction
-         ;; with linked-buffer.el
-         (let ((inhibit-modification-hooks t)
-               (buffer-modified (buffer-modified-p))
-               (buffer-undo-list t))
-           ,@body)
-       (set-buffer-modified-p buffer-modified))))
+  `(with-silent-modifications
+     ,@body))
 
 (defun pabbrev-get-usage-hash()
   "Return the usage hash for this buffer."
