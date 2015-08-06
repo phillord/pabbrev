@@ -1193,7 +1193,9 @@ It crashes under the same circumstances. Yeech."
       (subseq sequence from
               (min to
                    (length sequence)))
-    (cl-subseq sequence from to)))
+    (cl-subseq sequence
+               (min 0 from)
+               (min (length sequence) to))))
 
 (defvar pabbrev-select-mode-map
   (let ((map (make-sparse-keymap)))
