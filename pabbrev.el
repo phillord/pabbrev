@@ -921,12 +921,11 @@ The suggestion should start with PREFIX, and be entered at point."
           (setq pabbrev-marker (cons (point) (point)))
           (overlay-put pabbrev-overlay
                        'after-string
-                       (propertize
-                        (concat "["
-                                (propertize expansion
-                                            'face (overlay-get pabbrev-overlay 'face))
-                                "]")
-                        'cursor 0)))))))
+                       (concat
+                        (propertize "[" 'cursor 1)
+                        (propertize expansion
+                                    'face (overlay-get pabbrev-overlay 'face))
+                        "]")))))))
 
 (defvar pabbrev-last-expansion-suggestions nil
   "Cached alternative suggestions from the last expansion.")
