@@ -255,36 +255,34 @@
 ;; PWL, 2015. working.el is part of cedet but isn't in the emacs trunk
 ;; version. Perhaps I should just remove this?
 (eval-and-compile
-  (condition-case nil
-      (require 'working)
-    (error
-     (progn
-       (defvar pabbrev--msg)
-       (defvar pabbrev--dstr)
-       (defvar pabbrev--ref1)
-       (defmacro working-status-forms (message donestr &rest forms)
-         "Contain a block of code during which a working status is shown."
-         `(let ((pabbrev--msg ,message) (pabbrev--dstr ,donestr)
-                (pabbrev--ref1 0))
-            ,@forms))
+  (or (require 'working nil t)
+      (progn
+        (defvar pabbrev--msg)
+        (defvar pabbrev--dstr)
+        (defvar pabbrev--ref1)
+        (defmacro working-status-forms (message donestr &rest forms)
+          "Contain a block of code during which a working status is shown."
+          `(let ((pabbrev--msg ,message) (pabbrev--dstr ,donestr)
+                 (pabbrev--ref1 0))
+             ,@forms))
 
-       (defun working-status (&optional percent &rest args)
-         "Called within the macro `working-status-forms', show the status."
-         (message "%s%s" (apply 'format pabbrev--msg args)
-                  (if (eq percent t) (concat "... " pabbrev--dstr)
-                    (format "... %3d%%"
-                            (or percent
-                                (floor (* 100.0 (/ (float (point))
-                                                   (point-max)))))))))
+        (defun working-status (&optional percent &rest args)
+          "Called within the macro `working-status-forms', show the status."
+          (message "%s%s" (apply 'format pabbrev--msg args)
+                   (if (eq percent t) (concat "... " pabbrev--dstr)
+                     (format "... %3d%%"
+                             (or percent
+                                 (floor (* 100.0 (/ (float (point))
+                                                    (point-max)))))))))
 
-       ;; FIXME: Unused?
-       (defun working-dynamic-status (&optional _number &rest args)
-         "Called within the macro `working-status-forms', show the status."
-         (message "%s%s" (apply 'format pabbrev--msg args)
-                  (format "... %c"
-                          (aref [ ?- ?/ ?| ?\\ ] (% pabbrev--ref1 4))))
-         (setq pabbrev--ref1 (1+ pabbrev--ref1)))
-       (put 'working-status-forms 'lisp-indent-function 2)))))
+        ;; FIXME: Unused?
+        (defun working-dynamic-status (&optional _number &rest args)
+          "Called within the macro `working-status-forms', show the status."
+          (message "%s%s" (apply 'format pabbrev--msg args)
+                   (format "... %c"
+                           (aref [ ?- ?/ ?| ?\\ ] (% pabbrev--ref1 4))))
+          (setq pabbrev--ref1 (1+ pabbrev--ref1)))
+        (put 'working-status-forms 'lisp-indent-function 2))))
 
 (defgroup pabbrev nil
   "Predicative abbreviation expansion."
