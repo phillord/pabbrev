@@ -251,41 +251,6 @@
           (defalias 'cancel-timer 'delete-itimer))
         )))
 
-;; Working.el hack. Use working.el if it's around, or don't if it's not.
-;; PWL, 2015. working.el is part of cedet but isn't in the emacs trunk
-;; version. Perhaps I should just remove this?
-(eval-and-compile
-  (condition-case nil
-      (require 'working)
-    (error
-     (progn
-       (defvar pabbrev--msg)
-       (defvar pabbrev--dstr)
-       (defvar pabbrev--ref1)
-       (defmacro working-status-forms (message donestr &rest forms)
-         "Contain a block of code during which a working status is shown."
-         `(let ((pabbrev--msg ,message) (pabbrev--dstr ,donestr)
-                (pabbrev--ref1 0))
-            ,@forms))
-
-       (defun working-status (&optional percent &rest args)
-         "Called within the macro `working-status-forms', show the status."
-         (message "%s%s" (apply 'format pabbrev--msg args)
-                  (if (eq percent t) (concat "... " pabbrev--dstr)
-                    (format "... %3d%%"
-                            (or percent
-                                (floor (* 100.0 (/ (float (point))
-                                                   (point-max)))))))))
-
-       ;; FIXME: Unused?
-       (defun working-dynamic-status (&optional _number &rest args)
-         "Called within the macro `working-status-forms', show the status."
-         (message "%s%s" (apply 'format pabbrev--msg args)
-                  (format "... %c"
-                          (aref [ ?- ?/ ?| ?\\ ] (% pabbrev--ref1 4))))
-         (setq pabbrev--ref1 (1+ pabbrev--ref1)))
-       (put 'working-status-forms 'lisp-indent-function 2)))))
-
 (defgroup pabbrev nil
   "Predicative abbreviation expansion."
   :tag "Predictive Abbreviations."
@@ -381,6 +346,25 @@ I'm not telling you which version, I prefer."
   :group 'pabbrev
 )
 ;;(setq pabbrev-minimal-expansion-p t)
+
+(defvar pabbrev--msg)
+(defvar pabbrev--dstr)
+(defvar pabbrev--ref1)
+
+(defmacro pabbrev-working-status-forms (message donestr &rest forms)
+  "Contain a block of code during which a working status is shown."
+  `(let ((pabbrev--msg ,message) (pabbrev--dstr ,donestr)
+         (pabbrev--ref1 0))
+     ,@forms))
+
+(defun pabbrev-working-status (&optional percent &rest args)
+  "Called within the macro `pabbrev-working-status-forms', show the status."
+  (message "%s%s" (apply 'format pabbrev--msg args)
+           (if (eq percent t) (concat "... " pabbrev--dstr)
+             (format "... %3d%%"
+                     (or percent
+                         (floor (* 100.0 (/ (float (point))
+                                            (point-max)))))))))
 
 ;; stolen from font-lock!
 (if (featurep 'xemacs)
@@ -1376,19 +1360,12 @@ self inserting commands."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (working-status-forms "pabbrev scavenging buffer" "done"
+    (pabbrev-working-status-forms "pabbrev scavenging buffer" "done"
       (while (pabbrev-forward-thing)
-        (working-status (/ (* 100 (point)) (point-max)))
-        ;;(message "pabbrev scavenging (buffer %s words %s line %s done %s %%)..."
-        ;;        (current-buffer)
-        ;;       (pabbrev-get-usage-dictionary-size)
-        ;;      current-line
-        ;;     (/ (* 100 current-line) total-line))
-        ;;(message "pabbrev scavenging buffer...On line %s"
-        ;;       (count-lines (point-min) (point)))
+        (pabbrev-working-status (/ (* 100 (point)) (point-max)))
         (pabbrev-mark-add-word
          (pabbrev-bounds-of-thing-at-point)))
-      (working-status t))
+      (pabbrev-working-status t))
     (pabbrev-debug-message "Dictionary size %s total usage %s"
                            (pabbrev-get-usage-dictionary-size)
                            (pabbrev-get-total-usages-dictionary))
