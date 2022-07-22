@@ -4,7 +4,7 @@
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
-;; Version: 4.2.1
+;; Version: 4.2.2
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
@@ -927,7 +927,7 @@ The suggestion should start with PREFIX, and be entered at point."
               (this-command prev-binding))
           (if (eq 'self-insert-command prev-binding)
               (self-insert-command 1)
-            (funcall prev-binding))))))
+            (call-interactively prev-binding))))))
 
 ;; (defun pabbrev-call-previous-tab-binding ()
 ;;   "Call the function normally associated with [tab]."
