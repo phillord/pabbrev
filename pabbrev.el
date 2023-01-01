@@ -1,6 +1,6 @@
-;;; pabbrev.el --- Predictive abbreviation expansion
+;;; pabbrev.el --- Predictive abbreviation expansion  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2023 Free Software Foundation, Inc.
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
@@ -235,6 +235,11 @@
 ;; Scott Vokes added a nice patch, adding the single/multiple expansion, the
 ;; universal argument support and some bug fixes.
 
+;;; News:
+
+;; Since 4.2.2:
+;; - Cosmestic changes (enable lexical-binding, silence compiler warnings, ...)
+
 ;;; Code:
 (require 'cl-lib)
 (require 'thingatpt)
@@ -259,18 +264,15 @@
 
 (defcustom pabbrev-global-mode-not-buffer-names '("*Messages*")
   "*Will not activate function `global-pabbrev-mode' if buffers have this name."
-  :type '(repeat (string :tag "Buffer name"))
-  :group 'pabbrev)
+  :type '(repeat (string :tag "Buffer name")))
 
 (defcustom pabbrev-global-mode-buffer-size-limit nil
    "*Will not activate function `global-pabbrev-mode' if buffers are over this size (in bytes) (when non-nil)."
-   :type 'integer
-   :group 'pabbrev)
+   :type 'integer)
 
 (defcustom pabbrev-marker-distance-before-scavenge 2000
   "Minimal distance moved before we wish to scavenge."
-  :type 'integer
-  :group 'pabbrev)
+  :type 'integer)
 
 
 ;;(setq pabbrev-scavenge-on-large-move nil)
@@ -280,8 +282,7 @@ This can make Emacs' handling a little bumpy.  See also
 `pabbrev-scavenge-some-chunk-size', as reducing this, or increasing
 `pabbrev-marker-distance-before-scavenge'  is an alternative
 to setting this to nil"
-  :type 'boolean
-  :group 'pabbrev)
+  :type 'boolean)
 
 (defcustom pabbrev-thing-at-point-constituent 'symbol
   "Symbol defining THING which function `pabbrev-mode' works on.
@@ -292,7 +293,6 @@ for example, \"pabbrev-mode\" would be offered as an expansion, while
 if it is set to `word' \"pabbrev\" and \"mode\" would be offered.
 You could also set it to `whitespace' which would be really daft,
 or `page' which would be silly in a different way."
-  :group 'pabbrev
   :type 'symbol
   :options '(symbol word))
 
@@ -304,8 +304,7 @@ is being used, increase it if you want more.  It's set quite
 conservatively.  If you get choppy performance when moving
 around the buffer you should also consider
 `pabbrev-scavenge-on-large-move' to nil."
-  :type 'integer
-  :group 'pabbrev)
+  :type 'integer)
 
 (defcustom pabbrev-idle-timer-verbose t
   "If non NIL, print messages while scavenging on idle timer.
@@ -314,8 +313,7 @@ At the moment this is set to t by default.  The idle timer function,
 `pabbrev-idle-timer-function' uses quite a bit of processor power, and
 I want the users to known what is eating their CPU.  I may change
 this at a later date."
-  :type 'boolean
-  :group 'pabbrev)
+  :type 'boolean)
 
 (defcustom pabbrev-read-only-error t
   "If non NIL, signal an error when in a read only buffer.
@@ -326,8 +324,7 @@ prints a message when an attempt is made to use it in this way.
 But this is a pain if you toggle buffers read only a lot. Set
 this to NIL, and function `pabbrev-mode' will disable it's functionality in
 read only buffers silently."
-  :type 'boolean
-  :group 'pabbrev)
+  :type 'boolean)
 
 
 ;; variable in progress
@@ -343,7 +340,6 @@ completion seen on a command line.
 
 I'm not telling you which version, I prefer."
   :type 'boolean
-  :group 'pabbrev
 )
 ;;(setq pabbrev-minimal-expansion-p t)
 
@@ -359,7 +355,7 @@ I'm not telling you which version, I prefer."
 
 (defun pabbrev-working-status (&optional percent &rest args)
   "Called within the macro `pabbrev-working-status-forms', show the status."
-  (message "%s%s" (apply 'format pabbrev--msg args)
+  (message "%s%s" (apply #'format pabbrev--msg args)
            (if (eq percent t) (concat "... " pabbrev--dstr)
              (format "... %3d%%"
                      (or percent
@@ -375,19 +371,16 @@ I'm not telling you which version, I prefer."
           (((class grayscale) (background light)) (:foreground "DimGray" :italic t))
           (((class grayscale) (background dark)) (:foreground "LightGray" :italic t))
           (t (:bold t)))
-        "Face for displaying suggestions."
-        :group 'pabbrev)
+        "Face for displaying suggestions.")
       (defface pabbrev-single-suggestion-face
         '((((class color) (background dark)) (:foreground "tan"))
           (((class color) (background light)) (:foreground "green4"))
           (((class grayscale) (background light)) (:foreground "DimGray" :italic t))
           (((class grayscale) (background dark)) (:foreground "LightGray" :italic t))
           (t (:bold t)))
-        "Face for displaying one suggestion."
-        :group 'pabbrev)
+        "Face for displaying one suggestion.")
       (defface pabbrev-suggestions-label-face
-        nil "Font lock mode face used to highlight suggestions"
-        :group 'pabbrev))
+        nil "Font lock mode face used to highlight suggestions"))
   (progn                                ; GNU Emacs
     (defface pabbrev-suggestions-face
       '((((type tty) (class color)) (:foreground "green"))
@@ -396,8 +389,7 @@ I'm not telling you which version, I prefer."
         (((class color) (background light)) (:foreground "ForestGreen"))
         (((class color) (background dark)) (:foreground "Red"))
         (t (:bold t :underline t)))
-      "Face for displaying suggestions."
-      :group 'pabbrev)
+      "Face for displaying suggestions.")
     (defface pabbrev-single-suggestion-face
       '((((type tty) (class color)) (:foreground "green"))
         (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
@@ -405,13 +397,11 @@ I'm not telling you which version, I prefer."
         (((class color) (background light)) (:foreground "OliveDrab"))
         (((class color) (background dark)) (:foreground "PaleGreen"))
         (t (:bold t :underline t)))
-      "Face for displaying one suggestion."
-      :group 'pabbrev)
+      "Face for displaying one suggestion.")
     (defface pabbrev-suggestions-label-face
       '((t
          :inverse-video t))
-      "Font Lock mode face used to highlight suggestions"
-      :group 'pabbrev)))
+      "Font Lock mode face used to highlight suggestions")))
 
 
 ;;;; End user Customizable variables.
@@ -605,9 +595,9 @@ it's ordering is part of the core data structures"
     ;; might be needed for other bindings also.
 
     ;; \t works in tty but gets overridden by the [tab] binding elsewhere.
-    (define-key map "\t" 'pabbrev-expand-maybe)
+    (define-key map "\t" #'pabbrev-expand-maybe)
     ;; This is not needed since function-key-map remaps a `tab' into a \t.
-    ;;(define-key map [tab] 'pabbrev-expand-maybe)
+    ;;(define-key map [tab] #'pabbrev-expand-maybe)
     map)
   "Keymap for pabbrev-minor-mode.")
 
@@ -629,11 +619,8 @@ extraction of expansions. The upshot of this is that it can offer
 suggestions as you type, without causing an unacceptable slow down.
 
 There is an associated `global-pabbrev-mode' which turns on the mode
-on in all buffers.
-"
-  nil
-  " Pabbrev"
-  pabbrev-mode-map
+on in all buffers."
+  :lighter " Pabbrev"
   (when (and pabbrev-mode buffer-read-only pabbrev-read-only-error)
     ;; FIXME: Signaling an error makes no sense.  Just make it a `message'
     ;; and get rid of pabbrev-read-only-error.  After all, the user can
@@ -641,16 +628,16 @@ on in all buffers.
     (message "Can not use pabbrev-mode in read only buffer"))
   (cond
    (pabbrev-mode
-    (add-hook 'pre-command-hook 'pabbrev-pre-command-hook nil t)
-    (add-hook 'post-command-hook 'pabbrev-post-command-hook nil t)
+    (add-hook 'pre-command-hook #'pabbrev-pre-command-hook nil t)
+    (add-hook 'post-command-hook #'pabbrev-post-command-hook nil t)
     ;; Switch on the idle timer if required when the mode is switched on.
     (pabbrev-ensure-idle-timer)
     ;; Also run the idle timer function, to put some works in the
     ;; dictionary.
     (pabbrev-scavenge-some))
    (t
-    (remove-hook 'pre-command-hook 'pabbrev-pre-command-hook t)
-    (remove-hook 'post-command-hook 'pabbrev-post-command-hook t))))
+    (remove-hook 'pre-command-hook #'pabbrev-pre-command-hook t)
+    (remove-hook 'post-command-hook #'pabbrev-post-command-hook t))))
 
 ;;   (easy-mmode-define-minor-mode pabbrev-mode
 ;;                              "Toggle pabbrev mode.
@@ -799,8 +786,8 @@ A message is sent, as we can do little else safely,
 on the `post-command-hook', or `pre-command-hook'."
   (message "pabbrev mode has failed on %s hook: %s "
            hook (error-message-string err))
-  (remove-hook 'pre-command-hook 'pabbrev-pre-command-hook t)
-  (remove-hook 'post-command-hook 'pabbrev-post-command-hook t)
+  (remove-hook 'pre-command-hook #'pabbrev-pre-command-hook t)
+  (remove-hook 'post-command-hook #'pabbrev-post-command-hook t)
   (with-output-to-temp-buffer "*pabbrev-fail*"
     (princ "There has been an error in pabbrev-mode. This mode normally
 makes use of \"post-command-hook\", which runs after every command. If this
@@ -1076,7 +1063,7 @@ The command `pabbrev-show-previous-binding' prints this out."
   (interactive)
   (unless
       (or pabbrev-mode
-          (eq (buffer-name) " *pabbrev suggestions*"))
+          (equal (buffer-name) " *pabbrev suggestions*"))
     (delete-window (get-buffer-window " *pabbrev suggestions*"))
     (set-window-configuration pabbrev-window-configuration)))
 
@@ -1183,17 +1170,17 @@ It crashes under the same circumstances. Yeech."
 (defvar pabbrev-select-mode-map
   (let ((map (make-sparse-keymap)))
     (cl-loop for i from ?! to ?~ do
-          (define-key map (char-to-string i) 'pabbrev-noop))
-    (define-key map "\t" 'pabbrev-suggestions-select-default)
-    (define-key map [delete] 'pabbrev-suggestions-delete)
-    (define-key map "\C-?" 'pabbrev-suggestions-delete)
-    (define-key map "\C-m" 'pabbrev-suggestions-minimum)
-    (define-key map " " 'pabbrev-suggestions-delete-window)
-    (define-key map "q" 'pabbrev-suggestions-delete-window)
+          (define-key map (char-to-string i) #'pabbrev-noop))
+    (define-key map "\t" #'pabbrev-suggestions-select-default)
+    (define-key map [delete] #'pabbrev-suggestions-delete)
+    (define-key map "\C-?" #'pabbrev-suggestions-delete)
+    (define-key map "\C-m" #'pabbrev-suggestions-minimum)
+    (define-key map " " #'pabbrev-suggestions-delete-window)
+    (define-key map "q" #'pabbrev-suggestions-delete-window)
     ;; Define all the standard insert commands.
     (cl-loop for i from 0 to 9 do
           (define-key map
-            (number-to-string i) 'pabbrev-suggestions-select))
+            (number-to-string i) #'pabbrev-suggestions-select))
     map))
 
 (define-derived-mode pabbrev-select-mode fundamental-mode ;Use special-mode?
@@ -1381,7 +1368,7 @@ NUMBER is how many words we should try to scavenge"
   (if (not number)
       (setq number 20))
   (save-excursion
-    (dotimes (i number)
+    (dotimes (_ number)
       (pabbrev-forward-thing direction)
       (pabbrev-mark-add-word
        (pabbrev-bounds-of-thing-at-point)))
@@ -1412,9 +1399,9 @@ See `pabbrev-long-idle-timer'.")
 
 (defun pabbrev-start-idle-timer()
   (setq pabbrev-long-idle-timer
-        (run-with-idle-timer 5 t 'pabbrev-idle-timer-function))
+        (run-with-idle-timer 5 t #'pabbrev-idle-timer-function))
   (setq pabbrev-short-idle-timer
-        (run-with-idle-timer 1 t 'pabbrev-short-idle-timer)))
+        (run-with-idle-timer 1 t #'pabbrev-short-idle-timer)))
 
 ;;(setq  pabbrev-disable-timers t)
 (defvar pabbrev-disable-timers nil)
@@ -1453,7 +1440,8 @@ See `pabbrev-long-idle-timer'.")
 (defun pabbrev-idle-timer-function-0()
   "Add all words to the buffer.
 `pabbrev-scavenge-buffer' does this more efficiently interactively.
-If this takes up too much processor power, see `pabbrev-scavenge-some-chunk-size'."
+If this takes up too much processor power, see
+`pabbrev-scavenge-some-chunk-size'."
   (let ((forward-marker (point))
         (backward-marker (point))
         (forward-complete nil)
@@ -1552,8 +1540,7 @@ This looks very ugly.  Note that this only shows newly added words.  Use
 (defface pabbrev-debug-display-label-face
   '((t
      (:underline "navy")))
-  "Font Lock mode face used to highlight suggestions"
-  :group 'pabbrev)
+  "Font Lock mode face used to highlight suggestions")
 
 
 (defun pabbrev-debug-erase-all-overlays()
@@ -1650,7 +1637,7 @@ to the dictionary."
 (defun pabbrev-debug-clear-all-hashes()
   "Clear all hashes for all modes."
   (interactive)
-  (mapcar 'pabbrev-debug-clear-hashes pabbrev-prefix-hash-modes))
+  (mapcar #'pabbrev-debug-clear-hashes pabbrev-prefix-hash-modes))
 
 (defun pabbrev-debug-print-hashes()
   "Print the hashes for the current mode."
