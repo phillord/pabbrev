@@ -462,11 +462,6 @@ gather up the whole buffer, telling the user what it is doing, in case
 it takes up too much processor.  If this happened after a second it
 would be irritating in the extreme.")
 
-(defmacro pabbrev-save-buffer-modified-p (&rest body)
-  "Eval BODY without affected buffer modification status."
-  `(with-silent-modifications
-     ,@body))
-
 (defun pabbrev-get-usage-hash()
   "Return the usage hash for this buffer."
   (let((hash (get major-mode 'pabbrev-usage-hash)))
@@ -768,7 +763,7 @@ This function is normally run off the `post-command-hook'."
   ;; course.
   (pabbrev-delete-overlay)
   (when (featurep 'xemacs)
-    (pabbrev-save-buffer-modified-p
+    (with-silent-modifications
      (delete-region (car pabbrev-marker) (cdr pabbrev-marker))))
   (setq pabbrev-marker nil))
 
@@ -880,7 +875,7 @@ The suggestion should start with PREFIX, and be entered at point."
             pabbrev-expansion-suggestions suggestions)
       (if (featurep 'xemacs)
           (save-excursion
-            (pabbrev-save-buffer-modified-p
+            (with-silent-modifications
              (insert
               "[" expansion "]" )
              ;; store everything. Most importantly the pabbrev-marker!
@@ -1264,7 +1259,7 @@ self inserting commands."
         ;; mark the word visibly as well.
         (pabbrev-debug-display start end)
         ;; set a property so that we know what we have done.
-        (pabbrev-save-buffer-modified-p
+        (with-silent-modifications
          (add-text-properties start end
                               '(pabbrev-added t)))
         ;; and add the word to the system.
@@ -1304,7 +1299,7 @@ self inserting commands."
     (pabbrev-debug-message "Dictionary size %s total usage %s"
                            (pabbrev-get-usage-dictionary-size)
                            (pabbrev-get-total-usages-dictionary))
-    (pabbrev-save-buffer-modified-p
+    (with-silent-modifications
      (add-text-properties (point-min) (point-max) '(pabbrev-added t)))
     (message "pabbrev fast scavenging buffer...done.")))
 
