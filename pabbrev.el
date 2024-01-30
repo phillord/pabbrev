@@ -4,7 +4,9 @@
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Phillip Lord <phillip.lord@newcastle.ac.uk>
+;; URL: https://github.com/phillord/pabbrev
 ;; Version: 4.2.1
+;; Package-requires: ((emacs "25.1"))
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
 ;;
@@ -66,7 +68,7 @@
 ;; functionality by hitting [tab] for a second time.  This takes you
 ;; into a special suggestions buffer, from where you can select
 ;; secondary selections.  See `pabbrev-select-mode' for more
-;; details. There is also an option `pabbrev-minimal-expansion-p'
+;; details.  There is also an option `pabbrev-minimal-expansion-p'
 ;; which results in the shortest substring option being offered as the
 ;; first replacement.
 ;;
@@ -318,9 +320,9 @@ this at a later date."
   "If non NIL, signal an error when in a read only buffer.
 
 The function `pabbrev-mode' works by altering the local buffer,
-so it's pointless within a read only buffer. So, normally, it
+so it's pointless within a read only buffer.  So, normally, it
 prints a message when an attempt is made to use it in this way.
-But this is a pain if you toggle buffers read only a lot. Set
+But this is a pain if you toggle buffers read only a lot.  Set
 this to NIL, and function `pabbrev-mode' will disable it's functionality in
 read only buffers silently."
   :type 'boolean
@@ -330,10 +332,10 @@ read only buffers silently."
 (defcustom pabbrev-minimal-expansion-p nil
   "If t offer minimal expansion.
 
-pabbrev can select the optimal expansion in two different ways. The
+pabbrev can select the optimal expansion in two different ways.  The
 normal way is to offer the expansion which occurs most frequently in
 the words which pabbrev has scavenged (in any buffer in the same
-mode). The other method is to take the minimal occuring substring
+mode).  The other method is to take the minimal occuring substring
 present in any potential expansion; this is a lot more like standard
 completion seen on a command line.
 
