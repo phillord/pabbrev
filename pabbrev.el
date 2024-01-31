@@ -166,7 +166,6 @@
 ;; consecutively. But sometimes they get called twice). Please let us
 ;; know if you see this problem.
 
-
 ;;; Bug Reporting
 ;;
 ;; Bug reports are more than welcome. However one particular problem
@@ -240,16 +239,6 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'thingatpt)
-
-(eval-and-compile
-  (when (featurep 'xemacs)
-    (require 'overlay)
-    (unless (fboundp 'line-beginning-position)
-      (defalias 'line-beginning-position 'point-at-bol))
-    (unless (fboundp 'line-end-position)
-      (defalias 'line-end-position 'point-at-eol))
-    (unless (fboundp 'cancel-timer)
-      (defalias 'cancel-timer 'delete-itimer))))
 
 (defgroup pabbrev nil
   "Predicative abbreviation expansion."
@@ -368,51 +357,29 @@ See `pabbrev-long-idle-timer'.")
                          (floor (* 100.0 (/ (float (point)) (point-max)))))))))
 
 ;; stolen from font-lock!
-(if (featurep 'xemacs)
-    (progn
-      (defface pabbrev-suggestions-face
-        '((((class color) (background dark)) (:foreground "tan"))
-          (((class color) (background light)) (:foreground "green4"))
-          (((class grayscale) (background light)) (:foreground "DimGray" :italic t))
-          (((class grayscale) (background dark)) (:foreground "LightGray" :italic t))
-          (t (:bold t)))
-        "Face for displaying suggestions."
-        :group 'pabbrev)
-      (defface pabbrev-single-suggestion-face
-        '((((class color) (background dark)) (:foreground "tan"))
-          (((class color) (background light)) (:foreground "green4"))
-          (((class grayscale) (background light)) (:foreground "DimGray" :italic t))
-          (((class grayscale) (background dark)) (:foreground "LightGray" :italic t))
-          (t (:bold t)))
-        "Face for displaying one suggestion."
-        :group 'pabbrev)
-      (defface pabbrev-suggestions-label-face
-        nil "Font lock mode face used to highlight suggestions"
-        :group 'pabbrev))
-  (progn                                ; GNU Emacs
-    (defface pabbrev-suggestions-face
-      '((((type tty) (class color)) (:foreground "green"))
-        (((class grayscale) (background light)) (:foreground "Gray90" :bold t))
-        (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
-        (((class color) (background light)) (:foreground "ForestGreen"))
-        (((class color) (background dark)) (:foreground "Red"))
-        (t (:bold t :underline t)))
-      "Face for displaying suggestions."
-      :group 'pabbrev)
-    (defface pabbrev-single-suggestion-face
-      '((((type tty) (class color)) (:foreground "green"))
-        (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
-        (((class grayscale) (background dark)) (:foreground "DarkSlateGray" :bold t))
-        (((class color) (background light)) (:foreground "OliveDrab"))
-        (((class color) (background dark)) (:foreground "PaleGreen"))
-        (t (:bold t :underline t)))
-      "Face for displaying one suggestion."
-      :group 'pabbrev)
-    (defface pabbrev-suggestions-label-face
-      '((t
-         :inverse-video t))
-      "Font Lock mode face used to highlight suggestions"
-      :group 'pabbrev)))
+(defface pabbrev-suggestions-face
+  '((((type tty) (class color)) (:foreground "green"))
+    (((class grayscale) (background light)) (:foreground "Gray90" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
+    (((class color) (background light)) (:foreground "ForestGreen"))
+    (((class color) (background dark)) (:foreground "Red"))
+    (t (:bold t :underline t)))
+  "Face for displaying suggestions."
+  :group 'pabbrev)
+(defface pabbrev-single-suggestion-face
+  '((((type tty) (class color)) (:foreground "green"))
+    (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DarkSlateGray" :bold t))
+    (((class color) (background light)) (:foreground "OliveDrab"))
+    (((class color) (background dark)) (:foreground "PaleGreen"))
+    (t (:bold t :underline t)))
+  "Face for displaying one suggestion."
+  :group 'pabbrev)
+(defface pabbrev-suggestions-label-face
+  '((t
+     :inverse-video t))
+  "Font Lock mode face used to highlight suggestions"
+  :group 'pabbrev)
 
 ;;;; End user Customizable variables.
 
@@ -611,8 +578,6 @@ it's ordering is part of the core data structures"
     (unless (and pabbrev-short-idle-timer pabbrev-long-idle-timer)
       (pabbrev-start-idle-timer))))
 
-;; XEmacs has synced to newest easy-mmode now.
-;;(if (not (featurep 'xemacs))
 ;;;###autoload
 (define-minor-mode pabbrev-mode
   "Toggle pabbrev mode.
@@ -656,12 +621,6 @@ on in all buffers.
 ;; This mode is an abbreviation expansion mode. It looks through the
 ;; current buffer, and offers expansions based on the words already
 ;; there.
-
-;; I have only just recently ported this to XEmacs, and I don't
-;; personally use XEmacs, so it has received little or no testing."
-;;                              nil
-;;                              " Pabbrev"
-;;                              pabbrev-mode-map))
 
 ;;;###autoload
 (define-global-minor-mode global-pabbrev-mode
@@ -710,7 +669,6 @@ start and end positions")
 ;;    (pabbrev-fetch-all-suggestions-for-prefix
 ;;     (pabbrev-thing-at-point))))
 
-
 (defun pabbrev-post-command-hook()
   "Offer expansion if appropriate.
 This function is normally run off the `post-command-hook'."
@@ -718,10 +676,7 @@ This function is normally run off the `post-command-hook'."
       ;; pabbrev will not switch on in a read only buffer. But the
       ;; buffer may have become read only between the time that it was
       ;; switched on, and now. So we need to check this anyway.
-      (unless (or buffer-read-only
-                  ;; This seems to be an issue in XEmacs, so check for
-                  ;; this as well.
-                  (window-minibuffer-p (selected-window)))
+      (unless (or buffer-read-only (window-minibuffer-p (selected-window)))
         (save-excursion
           ;; ensure that any suggestion is deleted.
           (when pabbrev-marker
@@ -764,9 +719,6 @@ This function is normally run off the `post-command-hook'."
   ;; read only buffer. I could be wrong about this of
   ;; course.
   (pabbrev-delete-overlay)
-  (when (featurep 'xemacs)
-    (with-silent-modifications
-     (delete-region (car pabbrev-marker) (cdr pabbrev-marker))))
   (setq pabbrev-marker nil))
 
 (defvar pabbrev-expand-commands
@@ -869,33 +821,20 @@ The suggestion should start with PREFIX, and be entered at point."
          (expansion
            (if suggestion
                (substring suggestion (length prefix))
-             ""))
-         (end (point)))
+             "")))
     (when (< 0 (length expansion))
       ;; Add the abbreviation to the buffer.
       (setq pabbrev-expansion expansion
-            pabbrev-expansion-suggestions suggestions)
-      (if (featurep 'xemacs)
-          (save-excursion
-            (with-silent-modifications
-             (insert
-              "[" expansion "]" )
-             ;; store everything. Most importantly the pabbrev-marker!
-             (setq pabbrev-marker (cons end (point)))
-             (let ((point-1 (- (point) 1)))
-               (pabbrev-set-overlay
-                (- point-1 (length expansion)) point-1
-                (length suggestions)))))
-        (pabbrev-set-overlay (point) (point)
-                             (length suggestions))
-        (setq pabbrev-marker (cons (point) (point)))
-        (overlay-put pabbrev-overlay
-                     'after-string
-                     (concat
-                      (propertize "[" 'cursor 1)
-                      (propertize expansion
-                                  'face (overlay-get pabbrev-overlay 'face))
-                      "]"))))))
+            pabbrev-expansion-suggestions suggestions)         
+      (pabbrev-set-overlay (point) (point) (length suggestions))
+      (setq pabbrev-marker (cons (point) (point)))
+      (overlay-put pabbrev-overlay
+                   'after-string
+                   (concat
+                    (propertize "[" 'cursor 1)
+                    (propertize expansion
+                                'face (overlay-get pabbrev-overlay 'face))
+                    "]")))))
 
 (defvar pabbrev-last-expansion-suggestions nil
   "Cached alternative suggestions from the last expansion.")
@@ -985,10 +924,7 @@ The command `pabbrev-show-previous-binding' prints this out."
     ;; we check for tab and return either the binding for tab or the binding
     ;; for \t which should work regardless of what the mode binds.
     ;; Likewise return it seems!
-    (let ((tckv
-           (if (featurep 'xemacs)
-               (this-command-keys)
-             (this-command-keys-vector))))
+    (let ((tckv (this-command-keys-vector)))
       (cond
        ((or (equal tckv [tab]) (equal tckv [9]))
         (or (key-binding [tab]) (key-binding "\t")))
@@ -1145,21 +1081,8 @@ The command `pabbrev-show-previous-binding' prints this out."
   (shrink-window-if-larger-than-buffer (get-buffer-window " *pabbrev suggestions*")))
 
 (defun pabbrev-suggestions-subseq(sequence from to)
-  "Return subsequence from seq.
-FROM starting here
-TO finishing here.
-Amazing though it seems the implementation of this differs between Emacs,
-and XEmacs. Irritating or what!
-The Emacs version copes with numbers past the end, and backs with nil
-values. XEmacs uses its own builtin rather than the one in the CL package.
-It crashes under the same circumstances. Yeech."
-  (if (featurep 'xemacs)
-      (subseq sequence from
-              (min to
-                   (length sequence)))
-    (cl-subseq sequence
-               (min 0 from)
-               (min (length sequence) to))))
+  "Return subsequence from SEQUENCE starting FROM and ending with TO."
+  (cl-subseq sequence (min 0 from) (min (length sequence) to)))
 
 (defvar pabbrev-select-mode-map
   (let ((map (make-sparse-keymap)))
