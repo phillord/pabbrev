@@ -585,6 +585,12 @@ it's ordering is part of the core data structures"
   (when-let ((bounds (pabbrev-bounds-of-thing-at-point)))
     (buffer-substring-no-properties (car bounds) (cdr bounds))))
 
+(defsubst pabbrev-start-idle-timer()
+  (setq pabbrev-long-idle-timer
+        (run-with-idle-timer 5 t 'pabbrev-idle-timer-function)
+        pabbrev-short-idle-timer
+        (run-with-idle-timer 1 t 'pabbrev-short-idle-timer)))
+
 (defsubst pabbrev-ensure-idle-timer()
   (unless nil
     (unless (and pabbrev-short-idle-timer pabbrev-long-idle-timer)
@@ -1266,12 +1272,6 @@ NUMBER is how many words we should try to scavenge"
       (pabbrev-mark-add-word
        (pabbrev-bounds-of-thing-at-point)))
     (point)))
-
-(defsubst pabbrev-start-idle-timer()
-  (setq pabbrev-long-idle-timer
-        (run-with-idle-timer 5 t 'pabbrev-idle-timer-function)
-        pabbrev-short-idle-timer
-        (run-with-idle-timer 1 t 'pabbrev-short-idle-timer)))
 
 ;;(setq  pabbrev-disable-timers t)
 (defvar pabbrev-disable-timers nil)
