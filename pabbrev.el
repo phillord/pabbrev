@@ -334,10 +334,8 @@ I'm not telling you which version, I prefer."
   :group 'pabbrev)
 ;;(setq pabbrev-minimal-expansion-p t)
 
-(defcustom pabbrev-minimal-string-length 4
-  "Don't hash strings shorter than this length.
-
-Completions are not offered for strings shorter than this length."
+(defcustom pabbrev-minimal-suggestion-length 4
+  "Completions are not offered for strings shorter than this length."
   :type 'integer
   :group 'pabbrev)
 
@@ -495,29 +493,7 @@ This is a function internal to the data structures.  The
     ;; doing for a new cons.
     (puthash word value (pabbrev-get-usage-hash)) value))
 
-(defun pabbrev-add-word-cons-with-prefix (prefix conscell)
-  "Add a word usage, and a PREFIX.
-This function is internal to the data structures, and should normally
-only be called, by `pabbrev-add-word'.  CONSCELL should be cons
-returned from `pabbrev-add-word-usage', while PREFIX should be a
-prefix of the from the cons cell."
-  (let
-      ;; this should be an alist or nil
-      ((value (gethash prefix (pabbrev-get-prefix-hash))))
-    (if value
-        ;; so we have an alist. Has our word been added to this alist
-        ;; before? If not, do so. If it has been added, then it will
-        ;; have been updated with the addition of the word
-        (unless (member conscell value)
-          (setq value (cons conscell value)))
-      ;; nothing in there, so create an alist with
-      ;; a single element
-      (setq value (list conscell)))
-    ;; so we now have the value alist...sort it and store it back in
-    ;; the hash
-    (puthash prefix (pabbrev-sort-alist value) (pabbrev-get-prefix-hash))))
-
-(defun pabbrev-sort-alist(alist)
+(defsubst pabbrev-sort-alist(alist)
   ;; this sort is bit poor. It should be possible to do this in less
   ;; than linear time, rather than n(log-n) as now. I think most of
   ;; the time is spent entering the lambda function. The irony is that
@@ -542,6 +518,28 @@ prefix of the from the cons cell."
         ;;'pabbrev-comparitor-function))
         (lambda(a b) (> (cdr a) (cdr b)))))
 
+(defun pabbrev-add-word-cons-with-prefix (prefix conscell)
+  "Add a word usage, and a PREFIX.
+This function is internal to the data structures, and should normally
+only be called, by `pabbrev-add-word'.  CONSCELL should be cons
+returned from `pabbrev-add-word-usage', while PREFIX should be a
+prefix of the from the cons cell."
+  (let
+      ;; this should be an alist or nil
+      ((value (gethash prefix (pabbrev-get-prefix-hash))))
+    (if value
+        ;; so we have an alist. Has our word been added to this alist
+        ;; before? If not, do so. If it has been added, then it will
+        ;; have been updated with the addition of the word
+        (unless (member conscell value)
+          (setq value (cons conscell value)))
+      ;; nothing in there, so create an alist with
+      ;; a single element
+      (setq value (list conscell)))
+    ;; so we now have the value alist...sort it and store it back in
+    ;; the hash
+    (puthash prefix (pabbrev-sort-alist value) (pabbrev-get-prefix-hash))))
+
 (defsubst pabbrev-comparitor-function(a b)
   (> (cdr a) (cdr b)))
 
@@ -552,7 +550,7 @@ prefix of the from the cons cell."
       (pabbrev-add-word-cons-with-prefix
        (substring word 0 (1+ i)) conscell))))
 
-(defun pabbrev-fetch-all-suggestions-for-prefix(prefix)
+(defsubst pabbrev-fetch-all-suggestions-for-prefix(prefix)
   "Return the suggestions for a given PREFIX.
 Results are an alist, with cons with car of the word, and cdr of the
 number of usages seen so far. This alist should NOT be altered, its
@@ -677,6 +675,23 @@ start and end positions")
 (defvar-local pabbrev-marker-last-expansion nil
   "Marks where the last possible expansion was.")
 
+(defvar-local pabbrev-overlay nil
+  "Overlay for offered completion.")
+
+(defsubst pabbrev-delete-overlay()
+  "Make overlay invisible."
+  (when pabbrev-overlay
+    (delete-overlay pabbrev-overlay)))
+
+(defsubst pabbrev-delete-last-suggestion()
+  "Remove previously inserted suggestions."
+  ;; I don't think we need to check for buffer-read-only
+  ;; here, because pabbrev-marker will always be nil in a
+  ;; read only buffer. I could be wrong about this of
+  ;; course.
+  (pabbrev-delete-overlay)
+  (setq pabbrev-marker nil))
+
 ;;(defun test()(interactive)(let ((last-command 'self-insert-command))(pabbrev-post-command-hook)))
 
 ;;(defun test()
@@ -703,41 +718,23 @@ This function is normally run off the `post-command-hook'."
                 (bounds (pabbrev-bounds-of-thing-at-point))
                 (suggestions))
             (when (and
-                 ;; last command was a symbol
-                 ;; PWL last-command to this-command
-                 (symbolp this-command)
-                 ;; we have just had an appropriate command
-                 ;; PWL commented out and testing change suggestd by Ye Wenbin
-                 ;;(get last-command 'pabbrev-expand-after-command)
-                 (get this-command 'pabbrev-expand-after-command)
-                 ;; is word at point
-                 word
-                 ;; we are at the end of it.
-                 (= (point) (cdr bounds))
-                 ;; and we have some suggestions.
-                 (setq suggestions (pabbrev-fetch-all-suggestions-for-prefix word)))
-                (pabbrev-insert-suggestion word suggestions)
-                (pabbrev-post-command-check-movement)))))
+                   ;; last command was a symbol
+                   ;; PWL last-command to this-command
+                   (symbolp this-command)
+                   ;; we have just had an appropriate command
+                   ;; PWL commented out and testing change suggestd by Ye Wenbin
+                   ;;(get last-command 'pabbrev-expand-after-command)
+                   (get this-command 'pabbrev-expand-after-command)
+                   ;; is word at point
+                   word
+                   ;; we are at the end of it.
+                   (= (point) (cdr bounds))
+                   ;; and we have some suggestions.
+                   (setq suggestions (pabbrev-fetch-all-suggestions-for-prefix word)))
+              (pabbrev-insert-suggestion word suggestions)
+              (pabbrev-post-command-check-movement)))))
     (error
      (pabbrev-command-hook-fail err "post"))))
-
-(defvar pabbrev-overlay nil
-  "Overlay for offered completion.")
-(make-variable-buffer-local 'pabbrev-overlay)
-
-(defsubst pabbrev-delete-overlay()
-  "Make overlay invisible."
-  (when pabbrev-overlay
-    (delete-overlay pabbrev-overlay)))
-
-(defun pabbrev-delete-last-suggestion()
-  "Remove previously inserted suggestions."
-  ;; I don't think we need to check for buffer-read-only
-  ;; here, because pabbrev-marker will always be nil in a
-  ;; read only buffer. I could be wrong about this of
-  ;; course.
-  (pabbrev-delete-overlay)
-  (setq pabbrev-marker nil))
 
 (defvar pabbrev-expand-commands
   '(pabbrev-expand-maybe pabbrev-expand
@@ -1038,6 +1035,10 @@ The command `pabbrev-show-previous-binding' prints this out."
 (defvar pabbrev-suggestions-done-suggestions nil)
 (defvar pabbrev-suggestions-best-suggestion nil)
 
+(defsubst pabbrev-suggestions-subseq(sequence from to)
+  "Return subsequence from SEQUENCE starting FROM and ending with TO."
+  (cl-subseq sequence (min 0 from) (min (length sequence) to)))
+
 (defsubst pabbrev-suggestions-limit-alpha-sort (suggestions)
   "Limit suggestions and sort."
   (delq nil
@@ -1070,41 +1071,37 @@ The command `pabbrev-show-previous-binding' prints this out."
           "Best Match: " (car pabbrev-suggestions-best-suggestion)
           "\n"))
         (when suggestions
-          (cl-loop for i from 0 to 9 do
-                   ;; are we less than the suggestions
-                   (when (< i (length suggestions))
-                     (goto-char (point-max))
-                     ;; insert all the suggestions
+          (dotimes (i 10)
+            ;; are we less than the suggestions
+            (when (< i (length suggestions))
+              (goto-char (point-max))
+              ;; insert all the suggestions
 
-                     (let ((next-suggestion
-                            (concat
-                             (number-to-string i)
-                             ") "
-                             (car (nth i suggestions)) " " ))
-                           (line-length
-                            (- (line-end-position) (line-beginning-position))))
-                       ;; if well. are not on the first suggestion,
-                       (when (and (> i 0)
-                                  ;; and the line will be too long
-                                  (< window-width
-                                     (+ line-length (length next-suggestion))))
-                         ;; add a new line.
-                         (princ "\n"))
-                       (princ next-suggestion)
-                       (let ((start (- (point) (length next-suggestion))))
-                         (overlay-put
-                          (make-overlay start (+ 2 start))
-                          'face 'pabbrev-suggestions-label-face)))))))))
+              (let ((next-suggestion
+                     (concat
+                      (number-to-string i)
+                      ") "
+                      (car (nth i suggestions)) " " ))
+                    (line-length
+                     (- (line-end-position) (line-beginning-position))))
+                ;; if well. are not on the first suggestion,
+                (when (and (> i 0)
+                           ;; and the line will be too long
+                           (< window-width
+                              (+ line-length (length next-suggestion))))
+                  ;; add a new line.
+                  (princ "\n"))
+                (princ next-suggestion)
+                (let ((start (- (point) (length next-suggestion))))
+                  (overlay-put
+                   (make-overlay start (+ 2 start))
+                   'face 'pabbrev-suggestions-label-face)))))))))
   (shrink-window-if-larger-than-buffer (get-buffer-window " *pabbrev suggestions*")))
-
-(defun pabbrev-suggestions-subseq(sequence from to)
-  "Return subsequence from SEQUENCE starting FROM and ending with TO."
-  (cl-subseq sequence (min 0 from) (min (length sequence) to)))
 
 (defvar pabbrev-select-mode-map
   (let ((map (make-sparse-keymap)))
     (cl-loop for i from ?! to ?~ do
-             (define-key map (char-to-string i) 'pabbrev-noop))
+             (define-key map (char-to-string i) #'ignore))
     (define-key map "\t" 'pabbrev-suggestions-select-default)
     (define-key map [delete] 'pabbrev-suggestions-delete)
     (define-key map "\C-?" 'pabbrev-suggestions-delete)
@@ -1123,12 +1120,6 @@ The number keys selects the various possible expansions. \\[pabbrev-suggestions-
 removes the previously added expansion, \\[pabbrev-suggestions-minimum] selects the minimum
 matching substring, while \\[pabbrev-suggestions-delete-window] just deletes the window
 \\{pabbrev-select-mode-map}")
-
-(defun pabbrev-noop()
-  "Do absolutely nothing.
-This command is used to nobble the suggestions buffer
-self inserting commands."
-  (interactive))
 
 (defun pabbrev-suggestions-select-default()
   "Select the most commonly occuring string."
@@ -1190,6 +1181,19 @@ self inserting commands."
           (setq i end)))
       retn)))
 
+;;(setq pabbrev-debug-display t)
+(defvar pabbrev-debug-display nil
+  "If t visible mark the progress of function `pabbrev-mode' through the buffer.
+This looks very ugly.  Note that this only shows newly added words.  Use
+`pabbrev-debug-remove-properties' to clear this invisible markers.  Use
+`pabbrev-debug-show-all-properties' to show existing markers.")
+
+(defsubst pabbrev-debug-display (start end)
+  (when pabbrev-debug-display
+    (overlay-put
+     (make-overlay start end)
+     'face 'pabbrev-debug-display-label-face)))
+
 (defun pabbrev-mark-add-word (bounds)
   "Add word in BOUNDS as abbreviation, and mark the buffer."
   (when bounds
@@ -1202,8 +1206,8 @@ self inserting commands."
         (pabbrev-debug-display start end)
         ;; set a property so that we know what we have done.
         (with-silent-modifications
-         (add-text-properties start end
-                              '(pabbrev-added t)))
+          (add-text-properties start end
+                               '(pabbrev-added t)))
         ;; and add the word to the system.
         (pabbrev-add-word
          (buffer-substring-no-properties start end))))))
@@ -1387,19 +1391,6 @@ If it up too much processor power, see `pabbrev-scavenge-some-chunk-size'."
         (select-frame pabbrev-debug-frame)
         (switch-to-buffer (pabbrev-debug-get-buffer))
         (goto-char (point-max)))))
-
-;;(setq pabbrev-debug-display t)
-(defvar pabbrev-debug-display nil
-  "If t visible mark the progress of function `pabbrev-mode' through the buffer.
-This looks very ugly.  Note that this only shows newly added words.  Use
-`pabbrev-debug-remove-properties' to clear this invisible markers.  Use
-`pabbrev-debug-show-all-properties' to show existing markers.")
-
-(defun pabbrev-debug-display (start end)
-  (when pabbrev-debug-display
-      (overlay-put
-       (make-overlay start end)
-       'face 'pabbrev-debug-display-label-face)))
 
 (defface pabbrev-debug-display-label-face
   '((t
