@@ -235,11 +235,12 @@
 ;;
 ;; Scott Vokes added a nice patch, adding the single/multiple expansion, the
 ;; universal argument support and some bug fixes.
-
+
 ;;; Code:
 (require 'cl-lib)
 (require 'thingatpt)
-
+
+;;; User customization
 (defgroup pabbrev nil
   "Predicative abbreviation expansion."
   :tag "Predictive Abbreviations."
@@ -333,6 +334,43 @@ I'm not telling you which version, I prefer."
   :group 'pabbrev)
 ;;(setq pabbrev-minimal-expansion-p t)
 
+(defcustom pabbrev-minimal-string-length 4
+  "Don't hash strings shorter than this length.
+
+Completions are not offered for strings shorter than this length."
+  :type 'integer
+  :group 'pabbrev)
+
+;; stolen from font-lock!
+(defface pabbrev-suggestions-face
+  '((((type tty) (class color)) (:foreground "green"))
+    (((class grayscale) (background light)) (:foreground "Gray90" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
+    (((class color) (background light)) (:foreground "ForestGreen"))
+    (((class color) (background dark)) (:foreground "Red"))
+    (t (:bold t :underline t)))
+  "Face for displaying suggestions."
+  :group 'pabbrev)
+
+(defface pabbrev-single-suggestion-face
+  '((((type tty) (class color)) (:foreground "green"))
+    (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
+    (((class grayscale) (background dark)) (:foreground "DarkSlateGray" :bold t))
+    (((class color) (background light)) (:foreground "OliveDrab"))
+    (((class color) (background dark)) (:foreground "PaleGreen"))
+    (t (:bold t :underline t)))
+  "Face for displaying one suggestion."
+  :group 'pabbrev)
+
+(defface pabbrev-suggestions-label-face
+  '((t
+     :inverse-video t))
+  "Font Lock mode face used to highlight suggestions"
+  :group 'pabbrev)
+;;;; End user Customizable variables.
+
+
+;;; Implementation
 (defvar pabbrev--msg)
 (defvar pabbrev--dstr)
 (defvar pabbrev--ref1)
@@ -356,33 +394,7 @@ See `pabbrev-long-idle-timer'.")
                      (or percent
                          (floor (* 100.0 (/ (float (point)) (point-max)))))))))
 
-;; stolen from font-lock!
-(defface pabbrev-suggestions-face
-  '((((type tty) (class color)) (:foreground "green"))
-    (((class grayscale) (background light)) (:foreground "Gray90" :bold t))
-    (((class grayscale) (background dark)) (:foreground "DimGray" :bold t))
-    (((class color) (background light)) (:foreground "ForestGreen"))
-    (((class color) (background dark)) (:foreground "Red"))
-    (t (:bold t :underline t)))
-  "Face for displaying suggestions."
-  :group 'pabbrev)
-(defface pabbrev-single-suggestion-face
-  '((((type tty) (class color)) (:foreground "green"))
-    (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
-    (((class grayscale) (background dark)) (:foreground "DarkSlateGray" :bold t))
-    (((class color) (background light)) (:foreground "OliveDrab"))
-    (((class color) (background dark)) (:foreground "PaleGreen"))
-    (t (:bold t :underline t)))
-  "Face for displaying one suggestion."
-  :group 'pabbrev)
-(defface pabbrev-suggestions-label-face
-  '((t
-     :inverse-video t))
-  "Font Lock mode face used to highlight suggestions"
-  :group 'pabbrev)
-
-;;;; End user Customizable variables.
-
+
 ;;;; Begin Package Support.
 
 ;; mark commands after which expansion should be offered
@@ -769,7 +781,7 @@ anything. Toggling it off, and then on again will usually restore functionality.
 (defsubst pabbrev-debug-get-buffer()
   (get-buffer-create "*pabbrev-debug"))
 
-(defun pabbrev-marker-last-expansion()
+(defsubst pabbrev-marker-last-expansion()
   "Fetch marker for last offered expansion."
   (or pabbrev-marker-last-expansion
       (setq pabbrev-marker-last-expansion
@@ -1255,7 +1267,7 @@ NUMBER is how many words we should try to scavenge"
        (pabbrev-bounds-of-thing-at-point)))
     (point)))
 
-(defun pabbrev-start-idle-timer()
+(defsubst pabbrev-start-idle-timer()
   (setq pabbrev-long-idle-timer
         (run-with-idle-timer 5 t 'pabbrev-idle-timer-function)
         pabbrev-short-idle-timer
@@ -1347,7 +1359,7 @@ If it up too much processor power, see `pabbrev-scavenge-some-chunk-size'."
   (interactive)
   (message "Swiching off pabbrev messages" )
   (setq pabbrev-idle-timer-verbose nil))
-
+
 ;;; The following are debug functions.
 (defvar pabbrev-debug-buffer nil)
 
@@ -1449,7 +1461,7 @@ will `pabbrev-debug-restart-idle-timer'."
       (cancel-timer pabbrev-long-idle-timer)
       (setq pabbrev-long-idle-timer nil)))
 
-(defun pabbrev-debug-clear()
+(defsubst pabbrev-debug-clear()
   (pabbrev-debug-clear-all-hashes)
   (pabbrev-debug-remove-properties))
 
