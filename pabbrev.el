@@ -3,7 +3,7 @@
 ;; Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
-;; Maintainer: Phillip Lord <arthur.miller@live.com>
+;; Maintainer: Arthur Miller <arthur.miller@live.com>
 ;; URL: https://github.com/phillord/pabbrev
 ;; Version: 4.2.1
 ;; Package-requires: ((emacs "25.1"))
