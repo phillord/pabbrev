@@ -488,6 +488,9 @@ This is a function internal to the data structures.  The
     ;; doing for a new cons.
     (puthash word value (pabbrev-get-usage-hash)) value))
 
+(defsubst pabbrev-comparitor-function(a b)
+  (> (cdr a) (cdr b)))
+
 (defsubst pabbrev-sort-alist(alist)
   ;; this sort is bit poor. It should be possible to do this in less
   ;; than linear time, rather than n(log-n) as now. I think most of
@@ -534,9 +537,6 @@ prefix of the from the cons cell."
     ;; so we now have the value alist...sort it and store it back in
     ;; the hash
     (puthash prefix (pabbrev-sort-alist value) (pabbrev-get-prefix-hash))))
-
-(defsubst pabbrev-comparitor-function(a b)
-  (> (cdr a) (cdr b)))
 
 (defun pabbrev-add-word (word)
   "Add the usage of a WORD to the current dictionary."
@@ -743,8 +743,7 @@ before the command gets run.")
 This function is normally run off the `pre-command-hook'"
   (condition-case err
       (progn
-        (unless (memq this-command
-                      pabbrev-expand-commands)
+        (unless (memq this-command pabbrev-expand-commands)
           (setq pabbrev-expansion nil
                 pabbrev-expansion-suggestions nil))
         (when pabbrev-marker
@@ -886,28 +885,24 @@ UARG is the prefix argument."
   "Expand the minimal common prefix at point.
 With prefix argument, bring up the menu of all full expansions.
 UARG is the prefix argument."
-  (if (= uarg 4)
-      (if (> (length pabbrev-expansion-suggestions) 1)
-          (pabbrev-suggestions-goto-buffer pabbrev-expansion-suggestions)
-        (pabbrev-call-previous-tab-binding))
-    (if pabbrev-expansion
-        (pabbrev-expand)
-      (pabbrev-call-previous-tab-binding))))
+  (cond
+   ((and (= uarg 4) (> (length pabbrev-expansion-suggestions) 1))
+    (pabbrev-suggestions-goto-buffer pabbrev-expansion-suggestions))
+   (pabbrev-expansion
+    (pabbrev-expand))
+   (t (pabbrev-call-previous-tab-binding))))
 
 (defun pabbrev-expand-maybe-full (uarg)
   "Expand fully to the most common abbreviation at point.
 With prefix argument, bring up a menu of all full expansions.
 UARG is the prefix argument."
   (cond
-   ((= uarg 4)
-    (if (> (length pabbrev-expansion-suggestions) 1)
-        (pabbrev-suggestions-goto-buffer pabbrev-expansion-suggestions)
-      (pabbrev-call-previous-tab-binding)))
-   ((eq last-command 'pabbrev-expand-maybe)
-    (if (and (> (length pabbrev-expansion-suggestions) 1)
-             (> (length pabbrev-last-expansion-suggestions) 1))
-        (pabbrev-suggestions-goto-buffer pabbrev-last-expansion-suggestions)
-      (pabbrev-call-previous-tab-binding)))
+   ((and (= uarg 4) (> (length pabbrev-expansion-suggestions) 1))
+    (pabbrev-suggestions-goto-buffer pabbrev-expansion-suggestions))
+   ((and (eq last-command 'pabbrev-expand-maybe)
+         (> (length pabbrev-expansion-suggestions) 1)
+         (> (length pabbrev-last-expansion-suggestions) 1))
+    (pabbrev-suggestions-goto-buffer pabbrev-last-expansion-suggestions))
    (pabbrev-expansion
     (setq pabbrev-last-expansion-suggestions pabbrev-expansion-suggestions)
     (pabbrev-expand))
@@ -1054,8 +1049,7 @@ The command `pabbrev-show-previous-binding' prints this out."
           (pabbrev-suggestions-limit-alpha-sort suggestions)
           suggestions pabbrev-suggestions-done-suggestions)
     (let ((window-width (- (window-width) 1)))
-      (with-current-buffer
-          (get-buffer " *pabbrev suggestions*")
+      (with-current-buffer (get-buffer " *pabbrev suggestions*")
         (pabbrev-suggestions-setup)`
         (princ
          (concat ;;"Current Word: " prefix " "
@@ -1071,12 +1065,9 @@ The command `pabbrev-show-previous-binding' prints this out."
             (when (< i (length suggestions))
               (goto-char (point-max))
               ;; insert all the suggestions
-
               (let ((next-suggestion
-                     (concat
-                      (number-to-string i)
-                      ") "
-                      (car (nth i suggestions)) " " ))
+                     (concat (number-to-string i) ") "
+                             (car (nth i suggestions)) " " ))
                     (line-length
                      (- (line-end-position) (line-beginning-position))))
                 ;; if well. are not on the first suggestion,
@@ -1151,8 +1142,7 @@ matching substring, while \\[pabbrev-suggestions-delete-window] just deletes the
   "Select one of the numbered suggestions."
   (interactive)
   (let ((insert-index
-         (or index
-             (string-to-number (char-to-string last-command-event)))))
+         (or index (string-to-number (char-to-string last-command-event)))))
     (when (< insert-index (length pabbrev-suggestions-done-suggestions))
       (pabbrev-suggestions-insert
        (car (nth insert-index pabbrev-suggestions-done-suggestions))))))
@@ -1201,8 +1191,7 @@ This looks very ugly.  Note that this only shows newly added words.  Use
         (pabbrev-debug-display start end)
         ;; set a property so that we know what we have done.
         (with-silent-modifications
-          (add-text-properties start end
-                               '(pabbrev-added t)))
+          (add-text-properties start end '(pabbrev-added t)))
         ;; and add the word to the system.
         (pabbrev-add-word
          (buffer-substring-no-properties start end))))))
@@ -1412,21 +1401,16 @@ This can be rather slow."
   (let ((on-mark-state nil)
         (on-mark))
     (while t
-      (progn
-        (setq on-mark (get-text-property (point) 'pabbrev-added))
-        (message "On line %s"
-                 (count-lines (point-min) (point)))
-        (cond
-         ;; just moved onto marked area
-         ((and on-mark (not on-mark-state))
-          (setq on-mark-state (point)))
-         ;; just moved off a marked area
-         ((and on-mark-state (not on-mark))
-          (progn
-            (overlay-put
-             (make-overlay on-mark-state (point))
-             'face 'underline)
-            (setq on-mark-state nil)))))
+      (setq on-mark (get-text-property (point) 'pabbrev-added))
+      (message "On line %s" (count-lines (point-min) (point)))
+      (cond
+       ;; just moved onto marked area
+       ((and on-mark (not on-mark-state))
+        (setq on-mark-state (point)))
+       ;; just moved off a marked area
+       ((and on-mark-state (not on-mark))
+        (overlay-put (make-overlay on-mark-state (point)) 'face 'underline)
+        (setq on-mark-state nil)))
       (forward-char))))
 
 (defun pabbrev-debug-restart-idle-timer()
@@ -1456,19 +1440,14 @@ will `pabbrev-debug-restart-idle-timer'."
 This means all the words in the buffer will be open for addition
 to the dictionary."
   (interactive)
-  (remove-text-properties
-   (point-min)
-   (point-max)
-   '(pabbrev-added)))
+  (remove-text-properties (point-min) (point-max) '(pabbrev-added)))
 
 (defun pabbrev-debug-clear-hashes(&optional mode)
   "Clear the dictionary for major mode MODE, or the current mode."
   (interactive)
   (unless mode (setq mode major-mode))
-  (setq pabbrev-prefix-hash-modes
-        (delq mode pabbrev-prefix-hash-modes))
-  (setq pabbrev-usage-hash-modes
-        (delq mode pabbrev-usage-hash-modes))
+  (setq pabbrev-prefix-hash-modes (delq mode pabbrev-prefix-hash-modes)
+        pabbrev-usage-hash-modes  (delq mode pabbrev-usage-hash-modes))
   ;; help the GC a bit..
   (when (pabbrev-get-usage-hash)
       (clrhash (pabbrev-get-usage-hash))
@@ -1487,11 +1466,10 @@ to the dictionary."
   (interactive)
   (let ((usage (pabbrev-get-usage-hash))
         (prefix (pabbrev-get-prefix-hash)))
-    (switch-to-buffer
-     (get-buffer-create "*pabbrev hash*"))
+    (switch-to-buffer (get-buffer-create "*pabbrev hash*"))
     (erase-buffer)
-    (if (not usage)
-        (insert "Usage hash nil"))
+    (unless usage
+      (insert "Usage hash nil"))
     (insert "Usage hash size "
             (number-to-string
              (hash-table-count usage)) "\n")
