@@ -334,11 +334,6 @@ I'm not telling you which version, I prefer."
   :group 'pabbrev)
 ;;(setq pabbrev-minimal-expansion-p t)
 
-(defcustom pabbrev-minimal-suggestion-length 4
-  "Completions are not offered for strings shorter than this length."
-  :type 'integer
-  :group 'pabbrev)
-
 ;; stolen from font-lock!
 (defface pabbrev-suggestions-face
   '((((type tty) (class color)) (:foreground "green"))
