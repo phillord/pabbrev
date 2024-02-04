@@ -1005,7 +1005,7 @@ The command `pabbrev-show-previous-binding' prints this out."
 (defun pabbrev-suggestions-delete-window()
   "Delete the suggestions window."
   (interactive)
-  (unless (or pabbrev-mode (equal (buffer-name) " *pabbrev suggestions*"))
+  (when (or pabbrev-mode (equal (buffer-name) " *pabbrev suggestions*"))
     (delete-window (get-buffer-window " *pabbrev suggestions*"))
     (set-window-configuration pabbrev-window-configuration)))
 
