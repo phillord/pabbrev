@@ -1,11 +1,11 @@
 ;;; pabbrev.el --- Predictive abbreviation expansion -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2003-2023 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
 ;; Author: Phillip Lord <phillip.lord@newcastle.ac.uk>
 ;; Maintainer: Arthur Miller <arthur.miller@live.com>
 ;; URL: https://github.com/phillord/pabbrev
-;; Version: 4.2.3
+;; Version: 4.3.0
 ;; Package-requires: ((emacs "25.1"))
 
 ;; The contents of this file are subject to the GPL License, Version 3.0.
@@ -119,21 +119,6 @@
 ;; (require 'pabbrev)
 ;;
 ;; to your .emacs
-
-;;; Status:
-;;
-;; At the moment this seems to be working mostly, although
-;; occasionally it seems to leave an expansion in the buffer.
-;; I wrote this on an Emacs 21.0 prerelease, that I haven't upgraded
-;; yet, running under RedHat 7.x. I've also tried this out on NT
-;; Emacs (21.1), where it seems to byte compile, and work. But it has not
-;; been tried out extensively. It will NOT work on Emacs' older than
-;; 21.
-;;
-;; This package now has an XEmacs maintainer (Martin Kuehl). He
-;; appears to have isolated the last few problems with pabbrev on
-;; XEmacs, and it is running stably there now. It has been tested on
-;; XEmacs 21.4, running on Debian and Ubuntu Linux.
 
 ;;; Package Support:
 ;;
@@ -257,9 +242,10 @@
   :type '(repeat (string :tag "Buffer name")))
 
 (defcustom pabbrev-global-mode-buffer-size-limit nil
-   "*Will not activate function `global-pabbrev-mode' if buffers are over this size (in bytes) (when non-nil)."
-   :type 'integer
-   :group 'pabbrev)
+  "Max size of buffers for `global-pabbrev-mode'.
+If a buffer is over this size (in chars), `pabbrev-mode' will not activate.
+Nil means there is no limit."
+   :type 'integer)
 
 (defcustom pabbrev-marker-distance-before-scavenge 2000
   "Minimal distance moved before we wish to scavenge."
@@ -328,8 +314,7 @@ present in any potential expansion; this is a lot more like standard
 completion seen on a command line.
 
 I'm not telling you which version, I prefer."
-  :type 'boolean
-  :group 'pabbrev)
+  :type 'boolean)
 
 ;;(setq pabbrev-minimal-expansion-p t)
 
@@ -341,9 +326,7 @@ I'm not telling you which version, I prefer."
     (((class color) (background light)) (:foreground "ForestGreen"))
     (((class color) (background dark)) (:foreground "Red"))
     (t (:bold t :underline t)))
-  "Face for displaying suggestions."
-  :group 'pabbrev)
-
+  "Face for displaying suggestions.")
 (defface pabbrev-single-suggestion-face
   '((((type tty) (class color)) (:foreground "green"))
     (((class grayscale) (background light)) (:foreground "Gray70" :bold t))
@@ -351,40 +334,15 @@ I'm not telling you which version, I prefer."
     (((class color) (background light)) (:foreground "OliveDrab"))
     (((class color) (background dark)) (:foreground "PaleGreen"))
     (t (:bold t :underline t)))
-  "Face for displaying one suggestion."
-  :group 'pabbrev)
-
+  "Face for displaying one suggestion.")
 (defface pabbrev-suggestions-label-face
   '((t
      :inverse-video t))
-  "Font Lock mode face used to highlight suggestions"
-  :group 'pabbrev)
+  "Font Lock mode face used to highlight suggestions")
+
+
 ;;;; End user Customizable variables.
 
-
-;;; Implementation
-(defvar pabbrev--msg)
-(defvar pabbrev--dstr)
-(defvar pabbrev--ref1)
-
-(defvar pabbrev-short-idle-timer nil
-  "Timer which adds a few words.
-See `pabbrev-long-idle-timer'.")
-
-(defmacro pabbrev-working-status-forms (message donestr &rest forms)
-  "Contain a block of code during which a working status is shown."
-  `(let ((pabbrev--msg ,message) (pabbrev--dstr ,donestr)
-         (pabbrev--ref1 0))
-     ,@forms))
-
-(defun pabbrev-working-status (&optional percent &rest args)
-  "Called within the macro `pabbrev-working-status-forms', show the status."
-  (message "%s%s" (apply 'format pabbrev--msg args)
-           (if (eq percent t)
-               (concat "... " pabbrev--dstr)
-             (format "... %3d%%"
-                     (or percent
-                         (floor (* 100.0 (/ (float (point)) (point-max)))))))))
 
 
 ;;;; Begin Package Support.
@@ -434,6 +392,10 @@ changes, and will not bother the user.  The long timer will slowly
 gather up the whole buffer, telling the user what it is doing, in case
 it takes up too much processor.  If this happened after a second it
 would be irritating in the extreme.")
+
+(defvar pabbrev-short-idle-timer nil
+  "Timer which adds a few words.
+See `pabbrev-long-idle-timer'.")
 
 (defun pabbrev-get-usage-hash()
   "Return the usage hash for this buffer."
@@ -577,16 +539,17 @@ it's ordering is part of the core data structures"
   (when-let ((bounds (pabbrev-bounds-of-thing-at-point)))
     (buffer-substring-no-properties (car bounds) (cdr bounds))))
 
-(defsubst pabbrev-start-idle-timer()
+(defun pabbrev-start-idle-timer ()
   (setq pabbrev-long-idle-timer
-        (run-with-idle-timer 5 t 'pabbrev-idle-timer-function)
-        pabbrev-short-idle-timer
-        (run-with-idle-timer 1 t 'pabbrev-short-idle-timer)))
+        (run-with-idle-timer 5 t #'pabbrev-idle-timer-function))
+  (setq pabbrev-short-idle-timer
+        (run-with-idle-timer 1 t #'pabbrev-short-idle-timer)))
 
-(defsubst pabbrev-ensure-idle-timer()
+(defun pabbrev-ensure-idle-timer ()
   (unless nil
-    (unless (and pabbrev-short-idle-timer pabbrev-long-idle-timer)
-      (pabbrev-start-idle-timer))))
+    (if (not (and pabbrev-short-idle-timer
+                  pabbrev-long-idle-timer))
+        (pabbrev-start-idle-timer))))
 
 ;;;###autoload
 (define-minor-mode pabbrev-mode
@@ -1087,15 +1050,15 @@ The command `pabbrev-show-previous-binding' prints this out."
   (let ((map (make-sparse-keymap)))
     (cl-loop for i from ?! to ?~ do
              (define-key map (char-to-string i) #'ignore))
-    (define-key map "\t" 'pabbrev-suggestions-select-default)
-    (define-key map [delete] 'pabbrev-suggestions-delete)
-    (define-key map "\C-?" 'pabbrev-suggestions-delete)
-    (define-key map "\C-m" 'pabbrev-suggestions-minimum)
-    (define-key map " " 'pabbrev-suggestions-delete-window)
-    (define-key map "q" 'pabbrev-suggestions-delete-window)
+    (define-key map "\t"     #'pabbrev-suggestions-select-default)
+    (define-key map [delete] #'pabbrev-suggestions-delete)
+    (define-key map "\C-?"   #'pabbrev-suggestions-delete)
+    (define-key map "\C-m"   #'pabbrev-suggestions-minimum)
+    (define-key map " "      #'pabbrev-suggestions-delete-window)
+    (define-key map "q"      #'pabbrev-suggestions-delete-window)
     ;; Define all the standard insert commands.
     (dotimes (i 10)
-      (define-key map (number-to-string i) 'pabbrev-suggestions-select))
+      (define-key map (number-to-string i) #'pabbrev-suggestions-select))
     map))
 
 (define-derived-mode pabbrev-select-mode fundamental-mode ;Use special-mode?
@@ -1236,12 +1199,13 @@ This looks very ugly.  Note that this only shows newly added words.  Use
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (pabbrev-working-status-forms "pabbrev scavenging buffer" "done"
+    (let ((pr (make-progress-reporter "pabbrev scavenging buffer"
+                                      (point) (point-max))))
       (while (pabbrev-forward-thing)
-        (pabbrev-working-status (/ (* 100 (point)) (point-max)))
+        (progress-reporter-update pr (point))
         (pabbrev-mark-add-word
          (pabbrev-bounds-of-thing-at-point)))
-      (pabbrev-working-status t))
+      (progress-reporter-done pr))
     (pabbrev-debug-message "Dictionary size %s total usage %s"
                            (pabbrev-get-usage-dictionary-size)
                            (pabbrev-get-total-usages-dictionary))
@@ -1259,35 +1223,6 @@ NUMBER is how many words we should try to scavenge"
       (pabbrev-mark-add-word
        (pabbrev-bounds-of-thing-at-point)))
     (point)))
-
-(defvar pabbrev-long-idle-timer nil
-  "Timer which adds whole buffer.
-There are two idle timers which run for function `pabbrev-mode'.  This
-one doesn't start for a while, but once it has will work its way
-through the whole buffer.  In prints out a message to say what its
-doing, and stops on user input.  The variable
-`pabbrev-short-idle-timer' is the other.
-The idea here is that the short timer will pick up most of the recent
-changes, and will not bother the user.  The long timer will slowly
-gather up the whole buffer, telling the user what it is doing, in case
-it takes up too much processor.  If this happened after a second it
-would be irritating in the extreme.")
-
-(defvar pabbrev-short-idle-timer nil
-  "Timer which adds a few words.
-See `pabbrev-long-idle-timer'.")
-
-(defun pabbrev-ensure-idle-timer()
-  (unless nil
-    (if (not (and pabbrev-short-idle-timer
-                  pabbrev-long-idle-timer))
-        (pabbrev-start-idle-timer))))
-
-(defun pabbrev-start-idle-timer()
-  (setq pabbrev-long-idle-timer
-        (run-with-idle-timer 5 t #'pabbrev-idle-timer-function))
-  (setq pabbrev-short-idle-timer
-        (run-with-idle-timer 1 t #'pabbrev-short-idle-timer)))
 
 ;;(setq  pabbrev-disable-timers t)
 (defvar pabbrev-disable-timers nil)
