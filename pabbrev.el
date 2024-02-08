@@ -473,9 +473,8 @@ This is a function internal to the data structures.  The
   ;; emacs spent most of its time in this loop, but now I've bolted
   ;; on a user interface, its not so much of a problem, as plenty of
   ;; time is spent in placing on the "been here" overlays....
-  (sort alist
-        ;;'pabbrev-comparitor-function))
-        (lambda(a b) (> (cdr a) (cdr b)))))
+  (sort alist #'pabbrev-comparitor-function)) ; inlined, is speed ok?
+        ;;(lambda(a b) (> (cdr a) (cdr b)))))
 
 (defun pabbrev-add-word-cons-with-prefix (prefix conscell)
   "Add a word usage, and a PREFIX.
