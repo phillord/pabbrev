@@ -8,11 +8,10 @@
 
 #+html: <a href="https://www.gnu.org/software/emacs/"><img alt="GNU Emacs" src="https://img.shields.io/badge/Emacs-%237F5AB6.svg?&style=for-the-badge&logo=gnu-emacs&logoColor=white"
 #+html: <a href="https://elpa.gnu.org/packages/pabbrev.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/pabbrev.svg"/></a>
-#+html: <a href="https://elpa.gnu.org/devel/pabbrev.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/pabbrev.svg"/></a>
 #+html: <a href="https://melpa.org/packages/pabbrev"><img alt="MELPA" src="https://melpa.org/packages/pabbrev-badge.svg"/></a>
 
-Pabbrev provides predictive abbreviation expansion with no configuration needed.
-It wors with any mode.
+Pabbrev provides predictive abbreviation expansion with no configuration needed
+and works with any mode.
 
 Pabbrev is a small package, which analyzes buffer text in the buffer and
 collects usage statistics to rank most used words highest. Pabbrev is
@@ -33,15 +32,15 @@ For more details see pabbrev.el
 
 * Installation and Configuration
 
-Pabbrev is available from [[https://elpa.gnu.org/packages/corfu.html][GNU ELPA]], and can be installed directly via
-~package-install~. After installation, the global minor mode can be enabled with
-=M-x global-pabbrev-mode=. In order to configure Pabbrev and other packages in
-your init.el, you may want to use the built-in ~use-package~.
+Pabbrev is available from [[https://elpa.gnu.org/packages/corfu.html][GNU ELPA]]. You can install it directly via
+~package-install~.
+
+To enable pabbrev in your Emacs, run =M-x global-pabbrev-mode=.
 
 * Key bindings
 
 Pabbrev bind keybindings in pabbrev-mode-map, and currently only binds
-<TAB> key to pabbrev-exapnd-maybe function.
+<TAB> key to pabbrev-expand-maybe function.
 
 * Contributions
 
