@@ -6,7 +6,6 @@
 #+texinfo_dir_title: Pabbrev: (pabbrev).
 #+texinfo_dir_desc: Predictive Abbreviations
 
-#+html: <a href="https://www.gnu.org/software/emacs/"><img alt="GNU Emacs" src="https://img.shields.io/badge/Emacs-%237F5AB6.svg?&style=for-the-badge&logo=gnu-emacs&logoColor=white"
 #+html: <a href="https://elpa.gnu.org/packages/pabbrev.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/pabbrev.svg"/></a>
 #+html: <a href="https://melpa.org/packages/pabbrev"><img alt="MELPA" src="https://melpa.org/packages/pabbrev-badge.svg"/></a>
 
