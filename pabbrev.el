@@ -1248,11 +1248,14 @@ NUMBER is how many words we should try to scavenge"
 (defun pabbrev-idle-timer-function(&optional buffer)
   ;; so this only works on the current buffer. Might want to scavenge
   ;; over other buffers
-  (with-current-buffer
-      (or buffer pabbrev-timer-buffer (current-buffer))
-    (if (and pabbrev-mode (not pabbrev-disable-timers))
-        (pabbrev-idle-timer-function-0)
-      (pabbrev-debug-message "idle running in non pabbrev-mode"))))
+  (when-let ((first-live-b
+              (seq-find
+               #'buffer-live-p
+               (list buffer pabbrev-timer-buffer (current-buffer)))))
+    (with-current-buffer first-live-b
+      (if (and pabbrev-mode (not pabbrev-disable-timers))
+          (pabbrev-idle-timer-function-0)
+        (pabbrev-debug-message "idle running in non pabbrev-mode")))))
 
 ;; for some reason that I do not understand yet, this sometimes
 ;; appears to work in the wrong buffer. I really have not got any idea
