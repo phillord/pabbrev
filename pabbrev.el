@@ -986,14 +986,10 @@ The command `pabbrev-show-previous-binding' prints this out."
 (defvar pabbrev-suggestions-done-suggestions nil)
 (defvar pabbrev-suggestions-best-suggestion nil)
 
-(defsubst pabbrev-suggestions-subseq(sequence from to)
-  "Return subsequence from SEQUENCE starting FROM and ending with TO."
-  (cl-subseq sequence (min 0 from) (min (length sequence) to)))
-
 (defsubst pabbrev-suggestions-limit-alpha-sort (suggestions)
   "Limit suggestions and sort."
   (delq nil
-        (sort (pabbrev-suggestions-subseq suggestions 0 10)
+        (sort (seq-take suggestions 10)
               (lambda(a b)
                 (string< (car a) (car b))))))
 
@@ -1084,8 +1080,7 @@ matching substring, while \\[pabbrev-suggestions-delete-window] just deletes the
   (interactive)
   (pabbrev-suggestions-insert
    ;;(try-completion "" pabbrev-suggestions-done-suggestions)))
-   (try-completion
-    "" (pabbrev-suggestions-subseq pabbrev-suggestions-done-suggestions 0 10))))
+   (try-completion "" (seq-take pabbrev-suggestions-done-suggestions 10))))
 
 (defun pabbrev-suggestions-insert(insertion)
   "Actually insert the suggestion."
@@ -1388,7 +1383,7 @@ This can be rather slow."
 Toggling `pabbrev-mode' will tend to turn them on again, as
 will `pabbrev-debug-restart-idle-timer'."
   (interactive)
-  (when pabbrev-short-idle-timer      
+  (when pabbrev-short-idle-timer
       (cancel-timer pabbrev-short-idle-timer)
       (setq pabbrev-short-idle-timer nil))
   (when pabbrev-long-idle-timer
